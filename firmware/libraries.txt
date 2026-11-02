@@ -1,0 +1,22 @@
+AQM AETHER - REQUIRED ARDUINO LIBRARIES
+
+1. DHT sensor library by Adafruit
+2. Adafruit MPU6050
+3. Adafruit Unified Sensor
+4. Adafruit BusIO
+5. ESP32 BLE Arduino (compatible with the selected ESP32 Arduino Core)
+
+BUILT-IN / PLATFORM DEPENDENCIES
+
+1. Wire.h - I2C communication
+2. WiFi.h - Only if used by the firmware
+3. BLEDevice.h - BLE communication, provided by the compatible ESP32 BLE library
+
+MICROCONTROLLER
+
+ESP32 DevKit
+
+DEVELOPMENT ENVIRONMENT
+
+Arduino IDE
+ESP32 Arduino Core

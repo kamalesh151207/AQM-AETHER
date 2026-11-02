@@ -1,0 +1,32 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.flutter_tool/
+.pub-cache/
+
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Arduino
+*.elf
+*.hex
+*.bin
+*.o
+
+# Temporary files
+*.log
+*.tmp
+
+# Android
+**/android/local.properties
+local.properties
+.gradle/
+**/android/.gradle/
+**/android/captures/
