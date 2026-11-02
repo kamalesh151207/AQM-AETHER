@@ -5,24 +5,22 @@
 
 Board         : ESP32 DevKit
 Sensors       : DHT11 + MQ-2
-Communication : Bluetooth Low Energy (BLE)
+Communication : Bluetooth Low Energy
 Language      : C/C++ (Arduino Framework)
 
-BLE Device Name:
-AQM-Kamalesh
+BLE Device    : AQM-Kamalesh
 
-DHT11:
-  DATA -> GPIO 4
+DHT11 DATA    : GPIO 4
+MQ-2 AO       : GPIO 34 (through voltage divider)
 
-MQ-2:
-  AO -> GPIO 34 (through voltage divider)
-
-BLE FEATURES:
-  Temperature      - Read + Notify
-  Humidity         - Read + Notify
-  Sampling Interval- Read + Write
-  Alert            - Read + Notify
-  Gas Raw Value    - Read + Notify
+FEATURES:
+- Temperature monitoring
+- Humidity monitoring
+- MQ-2 raw ADC monitoring
+- BLE notifications
+- Adjustable sampling interval
+- Alert generation
+- BLE advertising restart after disconnection
 
 ==========================================================
 */
@@ -35,7 +33,7 @@ BLE FEATURES:
 #include <DHT.h>
 
 // ========================================================
-// 1. DEVICE CONFIGURATION
+// 1. CONFIGURATION
 // ========================================================
 
 #define DEVICE_NAME "AQM-Kamalesh"
@@ -52,12 +50,13 @@ BLE FEATURES:
 #define TEMP_ALERT_LIMIT 30.0
 #define HUMIDITY_ALERT_LIMIT 60.0
 
-// Example raw ADC threshold only.
-// This is NOT a calibrated ppm value.
+// Example raw ADC threshold, not a calibrated ppm value.
 #define GAS_RAW_ALERT_LIMIT 2000
 
+#define BLE_RESTART_DELAY 500
+
 // ========================================================
-// 2. BLE UUID CONFIGURATION
+// 2. BLE UUIDS
 // ========================================================
 
 #define SERVICE_UUID \
@@ -85,6 +84,7 @@ BLE FEATURES:
 DHT dht(DHT_PIN, DHT_TYPE);
 
 BLEServer* pServer = nullptr;
+BLEAdvertising* pAdvertising = nullptr;
 
 BLECharacteristic* pTemperatureCharacteristic = nullptr;
 BLECharacteristic* pHumidityCharacteristic = nullptr;
@@ -96,7 +96,11 @@ BLECharacteristic* pGasCharacteristic = nullptr;
 // 4. GLOBAL VARIABLES
 // ========================================================
 
-bool deviceConnected = false;
+volatile bool deviceConnected = false;
+volatile bool restartAdvertisingRequested = false;
+
+volatile unsigned long disconnectTime = 0;
+
 bool sensorError = false;
 
 unsigned long samplingInterval =
@@ -109,8 +113,21 @@ float humidity = 0.0;
 
 int gasRawValue = 0;
 
-// FUNCTION DECLARATION
+// Function declarations
+
+void initializeBLE();
+void initializeSensors();
+
+void handleBLEAdvertising();
+void handleSerialCommands();
+
 void updateIntervalCharacteristic();
+void updateBLEData();
+
+void readSensors();
+void printSensorData();
+
+String generateAlert();
 
 // ========================================================
 // 5. BLE SERVER CALLBACKS
@@ -122,9 +139,11 @@ class AQMServerCallbacks : public BLEServerCallbacks {
 
         deviceConnected = true;
 
+        restartAdvertisingRequested = false;
+
         Serial.println();
         Serial.println("================================");
-        Serial.println("BLE CLIENT CONNECTED");
+        Serial.println("       BLE CLIENT CONNECTED");
         Serial.println("================================");
     }
 
@@ -132,19 +151,20 @@ class AQMServerCallbacks : public BLEServerCallbacks {
 
         deviceConnected = false;
 
+        disconnectTime = millis();
+
+        restartAdvertisingRequested = true;
+
         Serial.println();
-        Serial.println("BLE CLIENT DISCONNECTED");
-
-        delay(300);
-
-        server->startAdvertising();
-
-        Serial.println("BLE advertising restarted");
+        Serial.println("================================");
+        Serial.println("       BLE CLIENT DISCONNECTED");
+        Serial.println("       ADVERTISING REQUESTED");
+        Serial.println("================================");
     }
 };
 
 // ========================================================
-// 6. BLE INTERVAL CALLBACK
+// 6. INTERVAL CALLBACK
 // ========================================================
 
 class IntervalCallbacks : public BLECharacteristicCallbacks {
@@ -152,9 +172,6 @@ class IntervalCallbacks : public BLECharacteristicCallbacks {
     void onWrite(
         BLECharacteristic* characteristic
     ) override {
-
-        // Compatible with ESP32 BLE libraries
-        // returning Arduino String.
 
         String input = characteristic->getValue();
 
@@ -173,24 +190,20 @@ class IntervalCallbacks : public BLECharacteristicCallbacks {
 
             if (!isDigit(input[i])) {
 
-                Serial.println(
-                    "Invalid interval received"
-                );
+                Serial.println("Invalid interval");
 
                 return;
             }
         }
 
-        int seconds = input.toInt();
+        long seconds = input.toInt();
 
         if (
             seconds < MIN_INTERVAL ||
             seconds > MAX_INTERVAL
         ) {
 
-            Serial.println(
-                "Interval out of permitted range"
-            );
+            Serial.println("Interval out of range");
 
             return;
         }
@@ -198,15 +211,13 @@ class IntervalCallbacks : public BLECharacteristicCallbacks {
         samplingInterval =
             (unsigned long)seconds * 1000UL;
 
-        Serial.print(
-            "Sampling interval updated: "
-        );
+        updateIntervalCharacteristic();
+
+        Serial.print("Sampling interval updated: ");
 
         Serial.print(seconds);
 
         Serial.println(" seconds");
-
-        updateIntervalCharacteristic();
     }
 };
 
@@ -219,7 +230,11 @@ void initializeBLE() {
     Serial.println();
     Serial.println("Initializing BLE...");
 
+    // Initialize BLE device
+
     BLEDevice::init(DEVICE_NAME);
+
+    // Create BLE server
 
     pServer = BLEDevice::createServer();
 
@@ -227,10 +242,14 @@ void initializeBLE() {
         new AQMServerCallbacks()
     );
 
+    // Create service
+
     BLEService* pService =
         pServer->createService(SERVICE_UUID);
 
+    // --------------------------------
     // TEMPERATURE CHARACTERISTIC
+    // --------------------------------
 
     pTemperatureCharacteristic =
         pService->createCharacteristic(
@@ -243,7 +262,9 @@ void initializeBLE() {
         new BLE2902()
     );
 
+    // --------------------------------
     // HUMIDITY CHARACTERISTIC
+    // --------------------------------
 
     pHumidityCharacteristic =
         pService->createCharacteristic(
@@ -256,7 +277,9 @@ void initializeBLE() {
         new BLE2902()
     );
 
+    // --------------------------------
     // INTERVAL CHARACTERISTIC
+    // --------------------------------
 
     pIntervalCharacteristic =
         pService->createCharacteristic(
@@ -269,7 +292,9 @@ void initializeBLE() {
         new IntervalCallbacks()
     );
 
+    // --------------------------------
     // ALERT CHARACTERISTIC
+    // --------------------------------
 
     pAlertCharacteristic =
         pService->createCharacteristic(
@@ -282,7 +307,9 @@ void initializeBLE() {
         new BLE2902()
     );
 
+    // --------------------------------
     // GAS CHARACTERISTIC
+    // --------------------------------
 
     pGasCharacteristic =
         pService->createCharacteristic(
@@ -295,7 +322,9 @@ void initializeBLE() {
         new BLE2902()
     );
 
-    // INITIAL CHARACTERISTIC VALUES
+    // --------------------------------
+    // INITIAL VALUES
+    // --------------------------------
 
     pTemperatureCharacteristic->setValue("0.0");
 
@@ -307,39 +336,128 @@ void initializeBLE() {
 
     pGasCharacteristic->setValue("0");
 
-    // START BLE SERVICE
+    // --------------------------------
+    // START SERVICE
+    // --------------------------------
 
     pService->start();
 
-    // START ADVERTISING
+    // --------------------------------
+    // ADVERTISING CONFIGURATION
+    // --------------------------------
 
-    BLEAdvertising* pAdvertising =
-        BLEDevice::getAdvertising();
+    pAdvertising = BLEDevice::getAdvertising();
 
-    pAdvertising->addServiceUUID(SERVICE_UUID);
+    BLEAdvertisementData advertisementData;
+
+    BLEAdvertisementData scanResponseData;
+
+    // Primary advertising packet
+
+    advertisementData.setFlags(0x06);
+
+    advertisementData.setCompleteServices(
+        BLEUUID(SERVICE_UUID)
+    );
+
+    // Scan response packet
+
+    scanResponseData.setName(DEVICE_NAME);
+
+    // Apply advertising data
+
+    pAdvertising->setAdvertisementData(
+        advertisementData
+    );
+
+    pAdvertising->setScanResponseData(
+        scanResponseData
+    );
 
     pAdvertising->setScanResponse(true);
 
+    // Start advertising
+
     pAdvertising->start();
 
-    Serial.println("BLE INITIALIZED");
+    Serial.println();
+    Serial.println("================================");
+    Serial.println("          BLE STATUS");
+    Serial.println("================================");
 
     Serial.print("Device Name: ");
 
     Serial.println(DEVICE_NAME);
 
-    Serial.println(
-        "Waiting for mobile application..."
-    );
+    Serial.print("Service UUID: ");
+
+    Serial.println(SERVICE_UUID);
+
+    Serial.println("BLE INITIALIZED");
+
+    Serial.println("Advertising started");
+
+    Serial.println("================================");
 }
 
 // ========================================================
-// 8. UPDATE INTERVAL CHARACTERISTIC
+// 8. BLE ADVERTISING RESTART
+// ========================================================
+
+void handleBLEAdvertising() {
+
+    if (
+        restartAdvertisingRequested &&
+        !deviceConnected
+    ) {
+
+        // Allow time for disconnection cleanup
+
+        if (
+            millis() - disconnectTime <
+            BLE_RESTART_DELAY
+        ) {
+
+            return;
+        }
+
+        restartAdvertisingRequested = false;
+
+        Serial.println();
+
+        Serial.println(
+            "Restarting BLE advertising..."
+        );
+
+        if (pServer != nullptr) {
+
+            BLEDevice::startAdvertising();
+
+            Serial.println(
+                "BLE advertising restarted"
+            );
+
+        } else {
+
+            Serial.println(
+                "BLE server unavailable"
+            );
+        }
+    }
+}
+
+// ========================================================
+// 9. UPDATE INTERVAL CHARACTERISTIC
 // ========================================================
 
 void updateIntervalCharacteristic() {
 
-    int seconds =
+    if (pIntervalCharacteristic == nullptr) {
+
+        return;
+    }
+
+    unsigned long seconds =
         samplingInterval / 1000UL;
 
     String value = String(seconds);
@@ -350,13 +468,12 @@ void updateIntervalCharacteristic() {
 }
 
 // ========================================================
-// 9. SENSOR INITIALIZATION
+// 10. SENSOR INITIALIZATION
 // ========================================================
 
 void initializeSensors() {
 
     Serial.println();
-
     Serial.println("Initializing sensors...");
 
     dht.begin();
@@ -370,12 +487,12 @@ void initializeSensors() {
     Serial.println("MQ-2 initialized");
 
     Serial.println(
-        "MQ-2 requires warm-up before useful readings."
+        "MQ-2 warm-up required"
     );
 }
 
 // ========================================================
-// 10. READ SENSOR DATA
+// 11. SENSOR READING
 // ========================================================
 
 void readSensors() {
@@ -397,7 +514,7 @@ void readSensors() {
         sensorError = true;
 
         Serial.println(
-            "ERROR: DHT11 sensor reading failed"
+            "DHT11 SENSOR ERROR"
         );
 
         return;
@@ -413,7 +530,7 @@ void readSensors() {
 }
 
 // ========================================================
-// 11. GENERATE ALERT STATUS
+// 12. ALERT GENERATION
 // ========================================================
 
 String generateAlert() {
@@ -444,10 +561,20 @@ String generateAlert() {
 }
 
 // ========================================================
-// 12. UPDATE BLE CHARACTERISTICS
+// 13. BLE DATA UPDATE
 // ========================================================
 
 void updateBLEData() {
+
+    if (
+        pTemperatureCharacteristic == nullptr ||
+        pHumidityCharacteristic == nullptr ||
+        pGasCharacteristic == nullptr ||
+        pAlertCharacteristic == nullptr
+    ) {
+
+        return;
+    }
 
     String tempValue =
         String(temperature, 1);
@@ -461,31 +588,25 @@ void updateBLEData() {
     String alertValue =
         generateAlert();
 
-    // Update temperature
+    // Update characteristic values
 
     pTemperatureCharacteristic->setValue(
         tempValue.c_str()
     );
 
-    // Update humidity
-
     pHumidityCharacteristic->setValue(
         humidityValue.c_str()
     );
-
-    // Update gas
 
     pGasCharacteristic->setValue(
         gasValue.c_str()
     );
 
-    // Update alert
-
     pAlertCharacteristic->setValue(
         alertValue.c_str()
     );
 
-    // Send notifications if connected
+    // Send notifications
 
     if (deviceConnected) {
 
@@ -500,7 +621,7 @@ void updateBLEData() {
 }
 
 // ========================================================
-// 13. SERIAL MONITOR OUTPUT
+// 14. SERIAL MONITOR OUTPUT
 // ========================================================
 
 void printSensorData() {
@@ -515,9 +636,7 @@ void printSensorData() {
 
     if (sensorError) {
 
-        Serial.println(
-            "DHT11 Status: SENSOR ERROR"
-        );
+        Serial.println("DHT11: SENSOR ERROR");
 
     } else {
 
@@ -538,17 +657,17 @@ void printSensorData() {
 
     Serial.println(gasRawValue);
 
-    Serial.print("Alert Status: ");
+    Serial.print("Alert: ");
 
     Serial.println(generateAlert());
 
-    Serial.print("BLE Status: ");
+    Serial.print("BLE: ");
 
     Serial.println(
-        deviceConnected ? "CONNECTED" : "WAITING"
+        deviceConnected ? "CONNECTED" : "DISCONNECTED"
     );
 
-    Serial.print("Sampling Interval: ");
+    Serial.print("Interval: ");
 
     Serial.print(samplingInterval / 1000UL);
 
@@ -558,7 +677,7 @@ void printSensorData() {
 }
 
 // ========================================================
-// 14. SERIAL COMMAND HANDLER
+// 15. SERIAL COMMAND HANDLING
 // ========================================================
 
 void handleSerialCommands() {
@@ -577,21 +696,15 @@ void handleSerialCommands() {
 
     if (command == "GET TEMP") {
 
-        Serial.print("Temperature: ");
-
         Serial.println(temperature);
     }
 
     else if (command == "GET HUM") {
 
-        Serial.print("Humidity: ");
-
         Serial.println(humidity);
     }
 
     else if (command == "GET GAS") {
-
-        Serial.print("MQ-2 Raw ADC: ");
 
         Serial.println(gasRawValue);
     }
@@ -604,7 +717,6 @@ void handleSerialCommands() {
     else if (command == "HELP") {
 
         Serial.println();
-
         Serial.println("AVAILABLE COMMANDS:");
 
         Serial.println("GET TEMP");
@@ -643,7 +755,7 @@ void handleSerialCommands() {
 
         if (valid) {
 
-            int seconds = value.toInt();
+            long seconds = value.toInt();
 
             if (
                 seconds >= MIN_INTERVAL &&
@@ -662,16 +774,13 @@ void handleSerialCommands() {
             } else {
 
                 Serial.println(
-                    "Interval must be between "
-                    "2 and 3600 seconds"
+                    "Interval must be between 2 and 3600 seconds"
                 );
             }
 
         } else {
 
-            Serial.println(
-                "Invalid interval value"
-            );
+            Serial.println("Invalid interval");
         }
     }
 
@@ -684,7 +793,7 @@ void handleSerialCommands() {
 }
 
 // ========================================================
-// 15. SETUP
+// 16. SETUP
 // ========================================================
 
 void setup() {
@@ -715,14 +824,22 @@ void setup() {
 }
 
 // ========================================================
-// 16. MAIN LOOP
+// 17. MAIN LOOP
 // ========================================================
 
 void loop() {
 
+    // Handle BLE advertising restart
+
+    handleBLEAdvertising();
+
+    // Handle serial commands
+
     handleSerialCommands();
 
     unsigned long currentTime = millis();
+
+    // Sensor sampling
 
     if (
         currentTime - previousSampleTime >=
@@ -741,13 +858,16 @@ void loop() {
 
         } else {
 
-            pAlertCharacteristic->setValue(
-                "DHT_SENSOR_ERROR"
-            );
+            if (pAlertCharacteristic != nullptr) {
 
-            if (deviceConnected) {
+                pAlertCharacteristic->setValue(
+                    "DHT_SENSOR_ERROR"
+                );
 
-                pAlertCharacteristic->notify();
+                if (deviceConnected) {
+
+                    pAlertCharacteristic->notify();
+                }
             }
         }
     }
