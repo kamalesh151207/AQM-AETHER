@@ -39,6 +39,13 @@ abstract class AppColors {
   static const Color accentSecondary = Color(0xFF16B8A6);     // Teal / Cyan (#16B8A6)
   static const Color accentSecondaryLight = Color(0xFFE8F8F6);
 
+  // Navy / Blue Action Theme (Professional IoT Controls)
+  static const Color navyPrimary = Color(0xFF1B365D);       // Deep Navy Blue (#1B365D)
+  static const Color navyHover = Color(0xFF24487A);         // Lighter Navy Hover (#24487A)
+  static const Color navyPressed = Color(0xFF132742);       // Dark Navy Pressed (#132742)
+  static const Color navyLight = Color(0xFFEBF1F8);         // Navy Tint Background (#EBF1F8)
+  static const Color navyBorder = Color(0xFF2D507F);        // Navy Border Highlight
+
   // Typography
   static const Color textPrimary = Color(0xFF20242B);         // #20242B Primary Text
   static const Color textSecondary = Color(0xFF7B8491);       // #7B8491 Secondary Text

@@ -10,6 +10,7 @@ import '../../models/sensor_reading.dart';
 import '../../providers/monitoring_provider.dart';
 import '../../services/threshold/threshold_service.dart';
 import '../../widgets/common/app_card.dart';
+import '../../widgets/common/export_csv_button.dart';
 
 enum AnalyticsRange {
   today('Today'),
@@ -168,27 +169,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         ),
         const SizedBox(width: AppSpacing.sm),
         // Export CSV Button
-        ElevatedButton.icon(
-          onPressed:
-              _isExporting ? null : () => _handleExportCsv(context, provider),
-          icon: _isExporting
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.file_download_outlined, size: 16),
-          label: const Text('EXPORT CSV',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accentAnalytics,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-          ),
+        ExportCsvButton(
+          isExporting: _isExporting,
+          onPressed: () => _handleExportCsv(context, provider),
         ),
       ],
     );

@@ -12,6 +12,7 @@ import '../../providers/device_provider.dart';
 import '../../providers/monitoring_provider.dart';
 import '../../services/threshold/threshold_service.dart';
 import '../../widgets/common/app_card.dart';
+import '../../widgets/common/export_csv_button.dart';
 
 enum EnvironmentalMetric { temperature, humidity, gasAdc }
 
@@ -53,29 +54,30 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                       color: AppColors.accentPrimary, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const Text(
-                  'ENVIRONMENT',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 0.5,
+                const Flexible(
+                  child: Text(
+                    'ENVIRONMENT',
+                    style: TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      letterSpacing: 0.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
             actions: [
-              IconButton(
-                tooltip: 'Export CSV Telemetry',
-                icon: _isExporting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.file_download_outlined, color: AppColors.textPrimary),
-                onPressed: _isExporting ? null : () => _handleCsvExport(context, monProv),
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.md),
+                child: Center(
+                  child: ExportCsvButton(
+                    isExporting: _isExporting,
+                    onPressed: () => _handleCsvExport(context, monProv),
+                  ),
+                ),
               ),
             ],
           ),
@@ -673,9 +675,33 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
     setState(() => _isExporting = false);
     messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          ok ? 'Telemetry CSV exported successfully' : 'No telemetry data to export',
-          style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: ok ? AppColors.navyPrimary : const Color(0xFF20242B),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        content: Row(
+          children: [
+            Icon(
+              ok ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+              color: ok ? AppColors.success : AppColors.warning,
+              size: 20,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                ok
+                    ? 'Telemetry CSV exported successfully'
+                    : 'No telemetry data to export',
+                style: const TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
