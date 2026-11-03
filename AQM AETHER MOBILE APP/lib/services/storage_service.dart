@@ -32,6 +32,9 @@ class StorageService {
         is_temp_simulated INTEGER DEFAULT 1,
         is_humidity_simulated INTEGER DEFAULT 1,
         gas_raw_adc INTEGER,
+        alert_status TEXT,
+        connection_status TEXT,
+        sampling_interval INTEGER,
         accel_x REAL,
         accel_y REAL,
         accel_z REAL,
@@ -60,13 +63,18 @@ class StorageService {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN gas_raw_adc INTEGER;');
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN accel_x REAL;');
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN accel_y REAL;');
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN accel_z REAL;');
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN gyro_x REAL;');
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN gyro_y REAL;');
-      await db.execute('ALTER TABLE sensor_readings ADD COLUMN gyro_z REAL;');
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN gas_raw_adc INTEGER;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN accel_x REAL;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN accel_y REAL;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN accel_z REAL;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN gyro_x REAL;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN gyro_y REAL;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN gyro_z REAL;'); } catch (_) {}
+    }
+    if (oldVersion < 3) {
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN alert_status TEXT;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN connection_status TEXT;'); } catch (_) {}
+      try { await db.execute('ALTER TABLE sensor_readings ADD COLUMN sampling_interval INTEGER;'); } catch (_) {}
     }
   }
 

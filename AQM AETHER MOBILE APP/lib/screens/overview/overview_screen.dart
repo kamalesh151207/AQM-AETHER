@@ -601,13 +601,16 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 Text(
                   !isBtOn
                       ? 'Bluetooth is disabled on your phone'
-                      : (status == DeviceConnectionStatus.error && deviceProvider.device.errorMessage != null
+                      : ((status == DeviceConnectionStatus.error || status == DeviceConnectionStatus.connectionFailed) &&
+                              deviceProvider.device.errorMessage != null
                           ? deviceProvider.device.errorMessage!
                           : status.userMessage),
                   style: TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 11,
-                    color: !isBtOn || status == DeviceConnectionStatus.error
+                    color: !isBtOn ||
+                            status == DeviceConnectionStatus.error ||
+                            status == DeviceConnectionStatus.connectionFailed
                         ? AppColors.critical
                         : AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -633,7 +636,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
             ElevatedButton(
               onPressed: status.isActive ? null : () => deviceProvider.connectToAqm(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: status == DeviceConnectionStatus.error
+                backgroundColor: (status == DeviceConnectionStatus.error ||
+                        status == DeviceConnectionStatus.connectionFailed)
                     ? AppColors.critical
                     : AppColors.accentPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -641,7 +645,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
               child: Text(
                 status.isActive
                     ? 'CONNECTING…'
-                    : (status == DeviceConnectionStatus.error ? 'RETRY' : 'CONNECT'),
+                    : ((status == DeviceConnectionStatus.error ||
+                            status == DeviceConnectionStatus.connectionFailed)
+                        ? 'RETRY'
+                        : 'CONNECT'),
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
               ),
             )

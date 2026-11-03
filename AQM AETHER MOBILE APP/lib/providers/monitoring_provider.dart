@@ -20,6 +20,9 @@ class MonitoringProvider extends ChangeNotifier {
   double? _pendingTemp;
   double? _pendingHumidity;
   int? _pendingGas;
+  String? _pendingAlert = 'NORMAL';
+  String? _pendingConnection = 'Connected';
+  int? _pendingInterval = 2;
   double? _pendingAx;
   double? _pendingAy;
   double? _pendingAz;
@@ -198,6 +201,9 @@ class MonitoringProvider extends ChangeNotifier {
     double? temperature,
     double? humidity,
     int? gasRawAdc,
+    String? alertStatus,
+    String? connectionStatus,
+    int? samplingInterval,
     double? accelX,
     double? accelY,
     double? accelZ,
@@ -208,6 +214,9 @@ class MonitoringProvider extends ChangeNotifier {
     if (temperature != null) _pendingTemp = temperature;
     if (humidity != null) _pendingHumidity = humidity;
     if (gasRawAdc != null) _pendingGas = gasRawAdc;
+    if (alertStatus != null) _pendingAlert = alertStatus;
+    if (connectionStatus != null) _pendingConnection = connectionStatus;
+    if (samplingInterval != null) _pendingInterval = samplingInterval;
     if (accelX != null) _pendingAx = accelX;
     if (accelY != null) _pendingAy = accelY;
     if (accelZ != null) _pendingAz = accelZ;
@@ -236,6 +245,9 @@ class MonitoringProvider extends ChangeNotifier {
       temperature: _pendingTemp,
       humidity: _pendingHumidity,
       gasRawAdc: _pendingGas,
+      alertStatus: _pendingAlert ?? 'NORMAL',
+      connectionStatus: _pendingConnection ?? 'Connected',
+      samplingInterval: _pendingInterval ?? 2,
       accelX: _pendingAx,
       accelY: _pendingAy,
       accelZ: _pendingAz,

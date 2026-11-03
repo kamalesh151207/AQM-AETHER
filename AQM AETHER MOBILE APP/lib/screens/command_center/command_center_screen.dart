@@ -602,15 +602,19 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
   Color _statusColor(DeviceConnectionStatus status) {
     switch (status) {
       case DeviceConnectionStatus.connected:
+      case DeviceConnectionStatus.ready:
         return AppColors.success;
       case DeviceConnectionStatus.reconnecting:
+      case DeviceConnectionStatus.deviceFound:
         return AppColors.warning;
       case DeviceConnectionStatus.error:
+      case DeviceConnectionStatus.connectionFailed:
         return AppColors.critical;
       case DeviceConnectionStatus.scanning:
       case DeviceConnectionStatus.connecting:
       case DeviceConnectionStatus.discoveringServices:
       case DeviceConnectionStatus.subscribingNotifications:
+      case DeviceConnectionStatus.disconnecting:
         return AppColors.accentSecondary;
       case DeviceConnectionStatus.disconnected:
       case DeviceConnectionStatus.idle:
@@ -687,10 +691,13 @@ class _BleStatusDot extends StatelessWidget {
   Color get _color {
     switch (status) {
       case DeviceConnectionStatus.connected:
+      case DeviceConnectionStatus.ready:
         return AppColors.success;
       case DeviceConnectionStatus.reconnecting:
+      case DeviceConnectionStatus.deviceFound:
         return AppColors.warning;
       case DeviceConnectionStatus.error:
+      case DeviceConnectionStatus.connectionFailed:
         return AppColors.critical;
       default:
         return AppColors.textMuted;
@@ -700,10 +707,13 @@ class _BleStatusDot extends StatelessWidget {
   String get _label {
     switch (status) {
       case DeviceConnectionStatus.connected:
+      case DeviceConnectionStatus.ready:
         return 'BLE';
       case DeviceConnectionStatus.reconnecting:
+      case DeviceConnectionStatus.deviceFound:
         return 'BLE';
       case DeviceConnectionStatus.error:
+      case DeviceConnectionStatus.connectionFailed:
         return 'ERR';
       default:
         return 'BLE';

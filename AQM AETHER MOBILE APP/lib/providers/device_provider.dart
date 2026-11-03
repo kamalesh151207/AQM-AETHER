@@ -116,12 +116,33 @@ class DeviceProvider extends ChangeNotifier {
   // Scan Results & Categorization
   List<ScanResult> get scanResults => _scanResults;
 
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+  set searchQuery(String q) {
+    _searchQuery = q.trim().toLowerCase();
+    notifyListeners();
+  }
+
+  bool isAqmDevice(ScanResult r) => _isAqmMatch(r);
+
   List<ScanResult> get aqmDevices {
-    return _scanResults.where(_isAqmMatch).toList();
+    final list = _scanResults.where(_isAqmMatch).toList();
+    if (_searchQuery.isEmpty) return list;
+    return list.where((r) {
+      final name = resolveDeviceName(r).toLowerCase();
+      final id = r.device.remoteId.str.toLowerCase();
+      return name.contains(_searchQuery) || id.contains(_searchQuery);
+    }).toList();
   }
 
   List<ScanResult> get otherDevices {
-    return _scanResults.where((r) => !_isAqmMatch(r)).toList();
+    final list = _scanResults.where((r) => !_isAqmMatch(r)).toList();
+    if (_searchQuery.isEmpty) return list;
+    return list.where((r) {
+      final name = resolveDeviceName(r).toLowerCase();
+      final id = r.device.remoteId.str.toLowerCase();
+      return name.contains(_searchQuery) || id.contains(_searchQuery);
+    }).toList();
   }
 
   List<DiscoveredServiceInfo> get discoveredServices => _device.discoveredServices;
@@ -188,7 +209,7 @@ class DeviceProvider extends ChangeNotifier {
   }
 
   void _handleStatusChanged(DeviceConnectionStatus status, String? error) {
-    if (status == DeviceConnectionStatus.connected) {
+    if (status == DeviceConnectionStatus.ready) {
       _successfulConnections++;
       _sessionConnectedSince = DateTime.now();
 
@@ -215,7 +236,7 @@ class DeviceProvider extends ChangeNotifier {
       _monitoringProvider.addEvent(MonitoringEvent(
         timestamp: DateTime.now(),
         type: MonitoringEventType.deviceConnected,
-        message: 'Device connected successfully',
+        message: 'Device connected & telemetry ready',
         detail: _device.name,
       ));
       _monitoringProvider.addEvent(MonitoringEvent(
@@ -223,9 +244,14 @@ class DeviceProvider extends ChangeNotifier {
         type: MonitoringEventType.monitoringStarted,
         message: _bleService.isGenericDevice
             ? 'Generic GATT peripheral exploration active'
-            : 'Telemetry stream established',
+            : 'Live telemetry stream active',
       ));
       NotificationService().showDeviceConnected(deviceName: _device.name);
+    } else if (status == DeviceConnectionStatus.connected) {
+      _device = _device.copyWith(
+        status: status,
+        clearError: true,
+      );
     } else if (status == DeviceConnectionStatus.disconnected) {
       _lastDisconnectedAt = DateTime.now();
       _unexpectedDisconnections++;
@@ -263,7 +289,7 @@ class DeviceProvider extends ChangeNotifier {
       ));
     } else {
       _device = _device.copyWith(status: status, errorMessage: error);
-      if (status == DeviceConnectionStatus.error && error != null) {
+      if (status == DeviceConnectionStatus.connectionFailed && error != null) {
         _monitoringProvider.addEvent(MonitoringEvent(
           timestamp: DateTime.now(),
           type: MonitoringEventType.error,
@@ -279,7 +305,12 @@ class DeviceProvider extends ChangeNotifier {
     _temperature = value;
     _lastTempUpdate = DateTime.now();
     _device = _device.copyWith(lastUpdatedAt: DateTime.now());
-    _monitoringProvider.recordReading(temperature: value);
+    _monitoringProvider.recordReading(
+      temperature: value,
+      alertStatus: _device.alertStatus,
+      connectionStatus: _device.status.label,
+      samplingInterval: _device.samplingInterval,
+    );
     ThresholdService().evaluateTelemetry(
       temperature: _temperature,
       humidity: _humidity,
@@ -292,7 +323,12 @@ class DeviceProvider extends ChangeNotifier {
     _humidity = value;
     _lastHumidityUpdate = DateTime.now();
     _device = _device.copyWith(lastUpdatedAt: DateTime.now());
-    _monitoringProvider.recordReading(humidity: value);
+    _monitoringProvider.recordReading(
+      humidity: value,
+      alertStatus: _device.alertStatus,
+      connectionStatus: _device.status.label,
+      samplingInterval: _device.samplingInterval,
+    );
     ThresholdService().evaluateTelemetry(
       temperature: _temperature,
       humidity: _humidity,
@@ -305,7 +341,12 @@ class DeviceProvider extends ChangeNotifier {
     _gasRawAdc = val;
     _lastGasUpdate = DateTime.now();
     _device = _device.copyWith(lastUpdatedAt: DateTime.now());
-    _monitoringProvider.recordReading(gasRawAdc: val);
+    _monitoringProvider.recordReading(
+      gasRawAdc: val,
+      alertStatus: _device.alertStatus,
+      connectionStatus: _device.status.label,
+      samplingInterval: _device.samplingInterval,
+    );
     notifyListeners();
   }
 
@@ -390,7 +431,9 @@ class DeviceProvider extends ChangeNotifier {
       return BleConstants.deviceName; // "AQM-Kamalesh"
     }
 
-    return 'Unknown Peripheral';
+    final id = r.device.remoteId.str;
+    final suffix = id.length > 5 ? id.substring(id.length - 5) : id;
+    return 'BLE Peripheral ($suffix)';
   }
 
   bool _isAqmMatch(ScanResult r) {
@@ -494,6 +537,15 @@ class DeviceProvider extends ChangeNotifier {
       return;
     }
     await connect(found.device, isAqm: true);
+  }
+
+  Future<void> reconnect() async {
+    _bleService.resetReconnectAttempts();
+    if (_bleService.connectedDevice != null) {
+      await connect(_bleService.connectedDevice!, isAqm: !_device.isGenericDevice);
+    } else {
+      await connectToAqm();
+    }
   }
 
   Future<void> disconnect() async {

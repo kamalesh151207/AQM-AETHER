@@ -3,12 +3,16 @@
 enum DeviceConnectionStatus {
   idle,
   scanning,
+  deviceFound,
   connecting,
+  connected,
   discoveringServices,
   subscribingNotifications,
-  connected,
-  reconnecting,
+  ready,
+  disconnecting,
   disconnected,
+  reconnecting,
+  connectionFailed,
   error,
 }
 
@@ -16,23 +20,30 @@ extension DeviceConnectionStatusExtension on DeviceConnectionStatus {
   String get label {
     switch (this) {
       case DeviceConnectionStatus.idle:
-        return 'Ready';
+        return 'Idle';
       case DeviceConnectionStatus.scanning:
         return 'Scanning…';
+      case DeviceConnectionStatus.deviceFound:
+        return 'Device Located';
       case DeviceConnectionStatus.connecting:
         return 'Connecting…';
+      case DeviceConnectionStatus.connected:
+        return 'Link Established';
       case DeviceConnectionStatus.discoveringServices:
         return 'Discovering Services…';
       case DeviceConnectionStatus.subscribingNotifications:
         return 'Subscribing…';
-      case DeviceConnectionStatus.connected:
-        return 'Connected';
-      case DeviceConnectionStatus.reconnecting:
-        return 'Reconnecting…';
+      case DeviceConnectionStatus.ready:
+        return 'Ready / Live';
+      case DeviceConnectionStatus.disconnecting:
+        return 'Disconnecting…';
       case DeviceConnectionStatus.disconnected:
         return 'Disconnected';
+      case DeviceConnectionStatus.reconnecting:
+        return 'Reconnecting…';
+      case DeviceConnectionStatus.connectionFailed:
       case DeviceConnectionStatus.error:
-        return 'Error';
+        return 'Connection Failed';
     }
   }
 
@@ -42,34 +53,49 @@ extension DeviceConnectionStatusExtension on DeviceConnectionStatus {
         return 'Ready to connect';
       case DeviceConnectionStatus.scanning:
         return 'Scanning for BLE devices…';
+      case DeviceConnectionStatus.deviceFound:
+        return 'Target BLE peripheral located. Preparing link…';
       case DeviceConnectionStatus.connecting:
         return 'Establishing secure GATT link…';
+      case DeviceConnectionStatus.connected:
+        return 'Physical GATT link established';
       case DeviceConnectionStatus.discoveringServices:
         return 'Discovering peripheral GATT services…';
       case DeviceConnectionStatus.subscribingNotifications:
-        return 'Configuring live sensor telemetry…';
-      case DeviceConnectionStatus.connected:
-        return 'Device connected successfully';
-      case DeviceConnectionStatus.reconnecting:
-        return 'Connection interrupted. Reconnecting…';
+        return 'Subscribing to live telemetry notifications…';
+      case DeviceConnectionStatus.ready:
+        return 'Device connected & telemetry active';
+      case DeviceConnectionStatus.disconnecting:
+        return 'Releasing peripheral resources…';
       case DeviceConnectionStatus.disconnected:
         return 'Disconnected from device';
+      case DeviceConnectionStatus.reconnecting:
+        return 'Connection interrupted. Reconnecting…';
+      case DeviceConnectionStatus.connectionFailed:
       case DeviceConnectionStatus.error:
-        return 'Connection error occurred';
+        return 'Connection failed. Please check device status.';
     }
   }
 
   bool get isActive =>
       this == DeviceConnectionStatus.scanning ||
+      this == DeviceConnectionStatus.deviceFound ||
       this == DeviceConnectionStatus.connecting ||
+      this == DeviceConnectionStatus.connected ||
       this == DeviceConnectionStatus.discoveringServices ||
       this == DeviceConnectionStatus.subscribingNotifications ||
+      this == DeviceConnectionStatus.disconnecting ||
       this == DeviceConnectionStatus.reconnecting;
 
-  bool get isConnected => this == DeviceConnectionStatus.connected;
+  bool get isConnected =>
+      this == DeviceConnectionStatus.connected ||
+      this == DeviceConnectionStatus.ready;
+
   bool get isDisconnected =>
       this == DeviceConnectionStatus.disconnected ||
-      this == DeviceConnectionStatus.idle;
+      this == DeviceConnectionStatus.idle ||
+      this == DeviceConnectionStatus.connectionFailed ||
+      this == DeviceConnectionStatus.error;
 }
 
 /// Generic Read-Only GATT characteristic representation for safe peripheral exploration

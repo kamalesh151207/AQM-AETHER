@@ -1,5 +1,8 @@
 // AQM AETHER — Sensor Reading Model with Gas & Motion Telemetry
 
+import 'package:intl/intl.dart';
+import '../core/utils/app_utils.dart';
+
 class SensorReading {
   final int? id;
   final DateTime timestamp;
@@ -8,8 +11,13 @@ class SensorReading {
   final bool isTemperatureSimulated;
   final bool isHumiditySimulated;
 
-  // MQ-135 Gas Sensor Telemetry (Raw 12-bit ADC 0–4095)
+  // MQ-2 / MQ-135 Gas Sensor Telemetry (Raw 12-bit ADC 0–4095)
   final int? gasRawAdc;
+
+  // Alert and Connection Metadata
+  final String? alertStatus;
+  final String? connectionStatus;
+  final int? samplingInterval;
 
   // MPU6050 6-Axis Motion Telemetry
   final double? accelX; // g
@@ -27,6 +35,9 @@ class SensorReading {
     this.isTemperatureSimulated = true,
     this.isHumiditySimulated = true,
     this.gasRawAdc,
+    this.alertStatus,
+    this.connectionStatus,
+    this.samplingInterval,
     this.accelX,
     this.accelY,
     this.accelZ,
@@ -43,6 +54,9 @@ class SensorReading {
     bool? isTemperatureSimulated,
     bool? isHumiditySimulated,
     int? gasRawAdc,
+    String? alertStatus,
+    String? connectionStatus,
+    int? samplingInterval,
     double? accelX,
     double? accelY,
     double? accelZ,
@@ -58,6 +72,9 @@ class SensorReading {
       isTemperatureSimulated: isTemperatureSimulated ?? this.isTemperatureSimulated,
       isHumiditySimulated: isHumiditySimulated ?? this.isHumiditySimulated,
       gasRawAdc: gasRawAdc ?? this.gasRawAdc,
+      alertStatus: alertStatus ?? this.alertStatus,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      samplingInterval: samplingInterval ?? this.samplingInterval,
       accelX: accelX ?? this.accelX,
       accelY: accelY ?? this.accelY,
       accelZ: accelZ ?? this.accelZ,
@@ -76,6 +93,9 @@ class SensorReading {
       'is_temp_simulated': isTemperatureSimulated ? 1 : 0,
       'is_humidity_simulated': isHumiditySimulated ? 1 : 0,
       'gas_raw_adc': gasRawAdc,
+      'alert_status': alertStatus,
+      'connection_status': connectionStatus,
+      'sampling_interval': samplingInterval,
       'accel_x': accelX,
       'accel_y': accelY,
       'accel_z': accelZ,
@@ -94,6 +114,9 @@ class SensorReading {
       isTemperatureSimulated: (map['is_temp_simulated'] as int? ?? 1) == 1,
       isHumiditySimulated: (map['is_humidity_simulated'] as int? ?? 1) == 1,
       gasRawAdc: (map['gas_raw_adc'] as num?)?.toInt(),
+      alertStatus: map['alert_status'] as String?,
+      connectionStatus: map['connection_status'] as String?,
+      samplingInterval: (map['sampling_interval'] as num?)?.toInt(),
       accelX: (map['accel_x'] as num?)?.toDouble(),
       accelY: (map['accel_y'] as num?)?.toDouble(),
       accelZ: (map['accel_z'] as num?)?.toDouble(),
@@ -104,21 +127,24 @@ class SensorReading {
   }
 
   String toCsvRow() {
-    final ts = timestamp.toIso8601String();
+    final ts = DateFormat('yyyy-MM-dd HH:mm:ss').format(timestamp);
     final temp = temperature?.toStringAsFixed(2) ?? '';
     final hum = humidity?.toStringAsFixed(2) ?? '';
     final gas = gasRawAdc?.toString() ?? '';
+    final alert = AppUtils.escapeCsv(alertStatus ?? 'NORMAL');
+    final conn = AppUtils.escapeCsv(connectionStatus ?? 'Connected');
+    final interval = samplingInterval?.toString() ?? '';
     final ax = accelX?.toStringAsFixed(3) ?? '';
     final ay = accelY?.toStringAsFixed(3) ?? '';
     final az = accelZ?.toStringAsFixed(3) ?? '';
     final gx = gyroX?.toStringAsFixed(2) ?? '';
     final gy = gyroY?.toStringAsFixed(2) ?? '';
     final gz = gyroZ?.toStringAsFixed(2) ?? '';
-    return '$ts,$temp,$hum,$gas,$ax,$ay,$az,$gx,$gy,$gz';
+    return '$ts,$temp,$hum,$gas,$alert,$conn,$interval,$ax,$ay,$az,$gx,$gy,$gz';
   }
 
   static String csvHeader() {
-    return 'Timestamp,Temperature (°C),Humidity (%),MQ-135 RAW ADC,Accel X (g),Accel Y (g),Accel Z (g),Gyro X (°/s),Gyro Y (°/s),Gyro Z (°/s)';
+    return 'Timestamp,Temperature (°C),Humidity (%),MQ-2 RAW ADC,Alert Status,BLE Connection Status,Sampling Interval (s),Accel X (g),Accel Y (g),Accel Z (g),Gyro X (°/s),Gyro Y (°/s),Gyro Z (°/s)';
   }
 }
 

@@ -1,5 +1,5 @@
 // AQM AETHER — BLE Device Discovery & GATT Explorer
-// Categorized Scanning: AQM AETHER Devices vs Other BLE Peripherals
+// Categorized Discovery: AQM-Compatible Devices vs Other Nearby BLE Peripherals
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,11 +11,29 @@ import '../../models/device_model.dart';
 import '../../providers/device_provider.dart';
 import '../../widgets/common/app_card.dart';
 
-class DevicesScreen extends StatelessWidget {
+class DevicesScreen extends StatefulWidget {
   const DevicesScreen({super.key});
 
   @override
+  State<DevicesScreen> createState() => _DevicesScreenState();
+}
+
+class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveClientMixin {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return Consumer<DeviceProvider>(
       builder: (context, provider, _) {
         final aqmList = provider.aqmDevices;
@@ -58,18 +76,20 @@ class DevicesScreen extends StatelessWidget {
               if (isScanning)
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentPrimary),
+                  child: Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentPrimary),
+                      ),
                     ),
                   ),
                 )
               else
                 IconButton(
-                  tooltip: 'Scan for Peripherals',
+                  tooltip: 'Scan Again',
                   icon: const Icon(Icons.refresh_rounded, color: AppColors.textPrimary),
                   onPressed: () {
                     HapticFeedback.lightImpact();
@@ -81,54 +101,72 @@ class DevicesScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             children: [
-              // 1. Connection Status Banner
+              // 1. Bluetooth Adapter Disabled Warning
+              if (!provider.isBluetoothOn) ...[
+                _buildBluetoothDisabledBanner(context, provider),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+
+              // 2. Connection Status Banner
               _buildActiveStatusCard(context, provider),
               const SizedBox(height: AppSpacing.md),
 
-              // 2. Scan Controls
+              // 3. Scan Control Toolbar & Search Filter
               _buildScanControlBar(context, provider),
               const SizedBox(height: AppSpacing.md),
 
-              // 3. Section: AQM AETHER DEVICE
+              // 4. Section: AQM-Compatible Devices
               _buildSectionHeader(
                 context,
-                title: 'AQM AETHER DEVICES',
+                title: 'AQM-COMPATIBLE DEVICES',
                 count: aqmList.length,
                 isTarget: true,
+                tooltip: 'Peripherals advertising Service UUID ...9001 or named AQM-Kamalesh',
               ),
               const SizedBox(height: AppSpacing.xs),
               if (aqmList.isEmpty)
                 _buildEmptyPlaceholder(
                   icon: Icons.sensors_off_rounded,
-                  title: isScanning ? 'Searching for AQM peripherals…' : 'No AQM device discovered',
-                  subtitle: 'Ensure the physical ESP32 is powered on, within Bluetooth range (~10m), and advertising "AQM-Kamalesh".',
+                  title: isScanning
+                      ? 'Searching for AQM peripherals…'
+                      : 'No AQM device discovered in range',
+                  subtitle:
+                      'Ensure your ESP32 is powered on, advertising, and within Bluetooth range (~10m).',
                   onRetry: isScanning ? null : () => provider.startScan(),
                 )
               else
-                ...aqmList.map((res) => _buildAqmDeviceCard(context, provider, res)),
+                ...aqmList.map((res) => _buildDeviceCard(context, provider, res, isAqm: true)),
 
               const SizedBox(height: AppSpacing.lg),
 
-              // 4. Section: OTHER BLE DEVICES
+              // 5. Section: Other Nearby BLE Devices
               _buildSectionHeader(
                 context,
-                title: 'OTHER BLE PERIPHERALS',
+                title: 'OTHER NEARBY BLE DEVICES',
                 count: otherList.length,
                 isTarget: false,
+                tooltip: 'All other discoverable Bluetooth Low Energy peripherals in range',
               ),
               const SizedBox(height: AppSpacing.xs),
               if (otherList.isEmpty)
                 _buildEmptyPlaceholder(
                   icon: Icons.bluetooth_rounded,
-                  title: isScanning ? 'Scanning for nearby peripherals…' : 'No other BLE devices found',
-                  subtitle: 'Nearby Bluetooth Low Energy devices will appear here.',
+                  title: isScanning
+                      ? 'Scanning for nearby peripherals…'
+                      : 'No other BLE devices discovered',
+                  subtitle:
+                      'Other broadcasting BLE devices (friend\'s device, smartwatch, beacons) will appear here.',
                 )
               else
-                ...otherList.take(25).map((res) => _buildOtherDeviceCard(context, provider, res)),
+                ...otherList.take(30).map((res) => _buildDeviceCard(context, provider, res, isAqm: false)),
 
+              const SizedBox(height: AppSpacing.md),
+
+              // 6. Educational Note on BLE Advertising
+              _buildBleAdvertisingNoticeCard(),
               const SizedBox(height: AppSpacing.lg),
 
-              // 5. Section: Safe GATT Explorer View (if connected)
+              // 7. Section: Safe GATT Explorer View (when connected)
               if (isConnected && currentDev.discoveredServices.isNotEmpty)
                 _buildGattExplorerCard(context, currentDev),
 
@@ -140,12 +178,67 @@ class DevicesScreen extends StatelessWidget {
     );
   }
 
-  // ── Active Status Card ───────────────────────────────────────────────────────
+  // ── Bluetooth Disabled Warning Banner ──────────────────────────────────────
+
+  Widget _buildBluetoothDisabledBanner(BuildContext context, DeviceProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.criticalLight,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.critical.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.bluetooth_disabled_rounded, color: AppColors.critical, size: 22),
+          const SizedBox(width: AppSpacing.sm),
+          const Expanded(
+            child: Text(
+              'Bluetooth is turned OFF. Enable Bluetooth to discover and connect to ESP32.',
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.critical,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => provider.enableBluetooth(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.critical,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+            ),
+            child: const Text(
+              'ENABLE',
+              style: TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Active Connection Status Card ──────────────────────────────────────────
 
   Widget _buildActiveStatusCard(BuildContext context, DeviceProvider provider) {
     final dev = provider.device;
     final isConnected = provider.isConnected;
-    final statusColor = isConnected ? AppColors.normal : (provider.isScanning ? AppColors.warning : AppColors.textMuted);
+    final isConnecting = dev.status.isActive && !isConnected;
+
+    Color statusColor = AppColors.textMuted;
+    if (isConnected) {
+      statusColor = AppColors.normal;
+    } else if (isConnecting) {
+      statusColor = AppColors.warning;
+    } else if (dev.status == DeviceConnectionStatus.connectionFailed) {
+      statusColor = AppColors.critical;
+    }
 
     return AppCard(
       color: AppColors.backgroundSecondary,
@@ -193,19 +286,34 @@ class DevicesScreen extends StatelessWidget {
                 ),
             ],
           ),
+          if (dev.errorMessage != null && !isConnected) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              dev.errorMessage!,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 11,
+                color: AppColors.critical,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
           if (isConnected) ...[
             const SizedBox(height: AppSpacing.sm),
             const Divider(height: 12, color: AppColors.borderSubtle),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Connected to: ${dev.name}',
-                  style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Text(
+                    'Connected to: ${dev.name} [${dev.id ?? "--"}]',
+                    style: const TextStyle(
+                      fontFamily: 'Manrope',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 TextButton(
@@ -228,64 +336,33 @@ class DevicesScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ] else if (dev.status == DeviceConnectionStatus.connectionFailed) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => provider.reconnect(),
+                icon: const Icon(Icons.refresh_rounded, size: 14),
+                label: const Text(
+                  'RECONNECT',
+                  style: TextStyle(fontFamily: 'Manrope', fontSize: 11, fontWeight: FontWeight.w800),
+                ),
+                style: TextButton.styleFrom(foregroundColor: AppColors.accentPrimary),
+              ),
+            ),
           ],
         ],
       ),
     );
   }
 
-  // ── Scan Control Bar ────────────────────────────────────────────────────────
+  // ── Scan Control Bar ───────────────────────────────────────────────────────
 
   Widget _buildScanControlBar(BuildContext context, DeviceProvider provider) {
     final isScanning = provider.isScanning;
-    final isBtOn = provider.isBluetoothOn;
 
     return Column(
       children: [
-        if (!isBtOn) ...[
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-            decoration: BoxDecoration(
-              color: AppColors.criticalLight,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.critical.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.bluetooth_disabled_rounded,
-                    color: AppColors.critical, size: 20),
-                const SizedBox(width: AppSpacing.sm),
-                const Expanded(
-                  child: Text(
-                    'Bluetooth is disabled on your phone. Please enable Bluetooth to discover nearby BLE devices.',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.critical,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => provider.enableBluetooth(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.critical,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                  child: const Text(
-                    'ENABLE',
-                    style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
         Row(
           children: [
             Expanded(
@@ -300,11 +377,11 @@ class DevicesScreen extends StatelessWidget {
                         provider.startScan();
                       },
                 icon: Icon(
-                  isScanning ? Icons.stop_rounded : Icons.bluetooth_searching_rounded,
+                  isScanning ? Icons.stop_circle_rounded : Icons.bluetooth_searching_rounded,
                   size: 18,
                 ),
                 label: Text(
-                  isScanning ? 'STOP SCANNING' : 'SCAN DEVICES',
+                  isScanning ? 'STOP SCAN' : 'SCAN DEVICES',
                   style: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 12,
@@ -352,7 +429,7 @@ class DevicesScreen extends StatelessWidget {
           ],
         ),
         if (isScanning) ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.xs),
             child: const LinearProgressIndicator(
@@ -362,48 +439,38 @@ class DevicesScreen extends StatelessWidget {
             ),
           ),
         ],
-      ],
-    );
-  }
-
-  // ── Section Header ──────────────────────────────────────────────────────────
-
-  Widget _buildSectionHeader(BuildContext context,
-      {required String title, required int count, required bool isTarget}) {
-    return Row(
-      children: [
-        Icon(
-          isTarget ? Icons.verified_rounded : Icons.devices_other_rounded,
-          size: 16,
-          color: isTarget ? AppColors.accentPrimary : AppColors.textMuted,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Manrope',
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: isTarget ? AppColors.textPrimary : AppColors.textMuted,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(width: 8),
+        const SizedBox(height: AppSpacing.sm),
+        // Search & Filter Input Field
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          height: 38,
           decoration: BoxDecoration(
-            color: isTarget
-                ? AppColors.accentPrimary.withOpacity(0.12)
-                : AppColors.surfaceVariant,
-            borderRadius: BorderRadius.circular(10),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: AppColors.border),
           ),
-          child: Text(
-            '$count',
-            style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: isTarget ? AppColors.accentPrimary : AppColors.textMuted,
+          child: TextField(
+            controller: _searchController,
+            onChanged: (val) => provider.searchQuery = val,
+            style: const TextStyle(fontFamily: 'Manrope', fontSize: 12),
+            decoration: InputDecoration(
+              hintText: 'Filter by device name or MAC address…',
+              hintStyle: const TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 11.5,
+                color: AppColors.textMuted,
+              ),
+              prefixIcon: const Icon(Icons.search_rounded, size: 16, color: AppColors.textMuted),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded, size: 14),
+                      onPressed: () {
+                        _searchController.clear();
+                        provider.searchQuery = '';
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              border: InputBorder.none,
             ),
           ),
         ),
@@ -411,20 +478,79 @@ class DevicesScreen extends StatelessWidget {
     );
   }
 
-  // ── AQM Device Card ─────────────────────────────────────────────────────────
+  // ── Section Header ─────────────────────────────────────────────────────────
 
-  Widget _buildAqmDeviceCard(
-      BuildContext context, DeviceProvider provider, ScanResult result) {
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String title,
+    required int count,
+    required bool isTarget,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Row(
+        children: [
+          Icon(
+            isTarget ? Icons.verified_rounded : Icons.devices_other_rounded,
+            size: 16,
+            color: isTarget ? AppColors.accentPrimary : AppColors.textMuted,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: isTarget ? AppColors.textPrimary : AppColors.textMuted,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: isTarget
+                  ? AppColors.accentPrimary.withOpacity(0.12)
+                  : AppColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: isTarget ? AppColors.accentPrimary : AppColors.textMuted,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Unified, Accessible Device Card ────────────────────────────────────────
+
+  Widget _buildDeviceCard(
+    BuildContext context,
+    DeviceProvider provider,
+    ScanResult result, {
+    required bool isAqm,
+  }) {
     final devName = provider.resolveDeviceName(result);
     final devId = result.device.remoteId.str;
     final rssi = result.rssi;
-    final isThisConnected = provider.isConnected &&
+    final isThisConnected = provider.isConnected && provider.device.id == devId;
+    final isThisConnecting = provider.device.status.isActive &&
+        !provider.isConnected &&
         provider.device.id == devId;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: AppCard(
-        color: AppColors.backgroundPrimary,
+        color: AppColors.backgroundSecondary,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -434,11 +560,16 @@ class DevicesScreen extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.accentPrimary.withOpacity(0.12),
+                    color: isAqm
+                        ? AppColors.accentPrimary.withOpacity(0.12)
+                        : AppColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(Icons.air_rounded,
-                      color: AppColors.accentPrimary, size: 20),
+                  child: Icon(
+                    isAqm ? Icons.air_rounded : Icons.bluetooth_rounded,
+                    color: isAqm ? AppColors.accentPrimary : AppColors.textSecondary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
@@ -449,10 +580,12 @@ class DevicesScreen extends StatelessWidget {
                         devName,
                         style: const TextStyle(
                           fontFamily: 'Manrope',
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         devId,
@@ -471,19 +604,22 @@ class DevicesScreen extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
+                // Compatibility Badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.accentPrimary.withOpacity(0.1),
+                    color: isAqm
+                        ? AppColors.accentPrimary.withOpacity(0.1)
+                        : AppColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
-                  child: const Text(
-                    'SERVICE 9001 ACTIVE',
+                  child: Text(
+                    isAqm ? 'AQM PROTOCOL VERIFIED' : 'GENERIC BLE PERIPHERAL',
                     style: TextStyle(
                       fontFamily: 'Manrope',
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.accentPrimary,
+                      color: isAqm ? AppColors.accentPrimary : AppColors.textSecondary,
                     ),
                   ),
                 ),
@@ -512,23 +648,42 @@ class DevicesScreen extends StatelessWidget {
                       ),
                     ),
                   )
+                else if (isThisConnecting)
+                  ElevatedButton.icon(
+                    onPressed: null,
+                    icon: const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    label: const Text(
+                      'CONNECTING…',
+                      style: TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.w800),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                  )
                 else
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      provider.connect(result.device, isAqm: true);
+                      provider.connect(result.device, isAqm: isAqm);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentPrimary,
+                      backgroundColor: isAqm ? AppColors.accentPrimary : const Color(0xFF1B365D),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
-                    child: const Text(
-                      'CONNECT',
-                      style: TextStyle(
+                    child: Text(
+                      isAqm ? 'CONNECT' : 'EXPLORE',
+                      style: const TextStyle(
                         fontFamily: 'Manrope',
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
@@ -543,88 +698,45 @@ class DevicesScreen extends StatelessWidget {
     );
   }
 
-  // ── Other Device Card ───────────────────────────────────────────────────────
+  // ── Signal Strength (RSSI) Badge ───────────────────────────────────────────
 
-  Widget _buildOtherDeviceCard(
-      BuildContext context, DeviceProvider provider, ScanResult result) {
-    final devName = provider.resolveDeviceName(result);
-    final devId = result.device.remoteId.str;
-    final rssi = result.rssi;
-    final isThisConnected = provider.isConnected &&
-        provider.device.id == devId;
+  Widget _buildRssiBadge(int rssi) {
+    Color color = AppColors.normal;
+    String quality = 'Good';
+    if (rssi >= -60) {
+      color = AppColors.normal;
+      quality = 'Strong';
+    } else if (rssi >= -75) {
+      color = const Color(0xFF16B8A6);
+      quality = 'Good';
+    } else if (rssi >= -88) {
+      color = AppColors.warning;
+      quality = 'Fair';
+    } else {
+      color = AppColors.critical;
+      quality = 'Weak';
+    }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: AppCard(
-        color: AppColors.backgroundPrimary,
+    return Tooltip(
+      message: 'Signal: $quality ($rssi dBm)',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: const Icon(Icons.bluetooth_rounded,
-                  color: AppColors.textSecondary, size: 18),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    devName,
-                    style: const TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    devId,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            _buildRssiBadge(rssi),
-            const SizedBox(width: AppSpacing.xs),
-            OutlinedButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                if (isThisConnected) {
-                  provider.disconnect();
-                } else {
-                  provider.connect(result.device, isAqm: false);
-                }
-              },
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                side: BorderSide(
-                  color: isThisConnected ? AppColors.critical : AppColors.borderMedium,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-              ),
-              child: Text(
-                isThisConnected ? 'LEAVE' : 'EXPLORE',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: isThisConnected ? AppColors.critical : AppColors.textPrimary,
-                ),
+            Icon(Icons.signal_cellular_alt_rounded, size: 13, color: color),
+            const SizedBox(width: 3),
+            Text(
+              '$rssi dBm',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: color,
               ),
             ),
           ],
@@ -633,7 +745,104 @@ class DevicesScreen extends StatelessWidget {
     );
   }
 
-  // ── GATT Explorer Tree View ─────────────────────────────────────────────────
+  // ── Educational Note on BLE Advertising ────────────────────────────────────
+
+  Widget _buildBleAdvertisingNoticeCard() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, size: 18, color: AppColors.textMuted),
+          SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              'Bluetooth Low Energy Note: Discovered peripherals are limited to devices actively transmitting 2.4GHz BLE advertising beacons. Idle devices in deep sleep or peripherals paired via Bluetooth Classic will not appear until they start advertising.',
+              style: TextStyle(
+                fontFamily: 'Manrope',
+                fontSize: 10.5,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Empty State Placeholder ────────────────────────────────────────────────
+
+  Widget _buildEmptyPlaceholder({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    VoidCallback? onRetry,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 28, color: AppColors.textMuted),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 10,
+              color: AppColors.textMuted,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (onRetry != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 14),
+              label: const Text(
+                'SCAN AGAIN',
+                style: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.accentPrimary,
+                side: const BorderSide(color: AppColors.accentPrimary),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── GATT Explorer Tree View ────────────────────────────────────────────────
 
   Widget _buildGattExplorerCard(BuildContext context, DeviceModel dev) {
     return AppCard(
@@ -795,96 +1004,6 @@ class DevicesScreen extends StatelessWidget {
           fontWeight: FontWeight.w800,
           color: color,
         ),
-      ),
-    );
-  }
-
-  Widget _buildRssiBadge(int rssi) {
-    Color color = AppColors.normal;
-    if (rssi < -80) {
-      color = AppColors.critical;
-    } else if (rssi < -65) {
-      color = AppColors.warning;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.signal_cellular_alt_rounded, size: 14, color: color),
-        const SizedBox(width: 2),
-        Text(
-          '$rssi dBm',
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyPlaceholder({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    VoidCallback? onRetry,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 28, color: AppColors.textMuted),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 10,
-              color: AppColors.textMuted,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          if (onRetry != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded, size: 14),
-              label: const Text(
-                'RETRY SCAN',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accentPrimary,
-                side: const BorderSide(color: AppColors.accentPrimary),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-              ),
-            ),
-          ],
-        ],
       ),
     );
   }

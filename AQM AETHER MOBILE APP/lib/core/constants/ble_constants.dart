@@ -96,7 +96,7 @@ abstract class AppConstants {
 
   // Database
   static const String dbName = 'aqm_aether.db';
-  static const int dbVersion = 2;
+  static const int dbVersion = 3;
 
   // Honest sensor limitations disclaimer
   static const String prototypeDisclaimer =

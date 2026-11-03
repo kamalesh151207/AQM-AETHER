@@ -1,5 +1,6 @@
 // AQM AETHER — Utility Functions
 
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
@@ -95,38 +96,74 @@ abstract class AppUtils {
 
   // Connection Status Color
   static Color statusColor(dynamic status) {
-    final str = status.toString();
-    if (str.contains('connected')) return AppColors.success;
-    if (str.contains('connecting') || str.contains('scanning') || str.contains('reconnecting') || str.contains('discovering') || str.contains('subscribing')) {
+    final str = status.toString().toLowerCase();
+    if (str.contains('ready') || str.contains('connected')) return AppColors.success;
+    if (str.contains('connecting') ||
+        str.contains('scanning') ||
+        str.contains('devicefound') ||
+        str.contains('reconnecting') ||
+        str.contains('discovering') ||
+        str.contains('subscribing') ||
+        str.contains('disconnecting')) {
       return AppColors.warning;
     }
-    if (str.contains('error')) return AppColors.critical;
+    if (str.contains('error') || str.contains('failed')) return AppColors.critical;
     return AppColors.textMuted;
   }
 
   // Parse BLE payload
-  // ESP32 firmware sends values as UTF-8 encoded strings (e.g., "25.3")
-  static double? parseFloatPayload(List<int> bytes) {
+  // ESP32 firmware sends values as ASCII strings (e.g., "26.5", "54.0")
+  static double? parseFloatPayload(List<int>? bytes) {
+    if (bytes == null || bytes.isEmpty) return null;
     try {
-      final str = String.fromCharCodes(bytes).trim();
-      return double.parse(str);
+      // 1. Try ASCII string parsing first (Primary ESP32 protocol)
+      final rawStr = String.fromCharCodes(bytes).trim();
+      final clean = rawStr.replaceAll(RegExp(r'[^\d.-]'), '');
+      if (clean.isNotEmpty) {
+        final val = double.tryParse(clean);
+        if (val != null && !val.isNaN && !val.isInfinite) {
+          return val;
+        }
+      }
+
+      // 2. Fallback: Little-endian 4-byte IEEE 754 float
+      if (bytes.length == 4) {
+        final bdata = ByteData.sublistView(Uint8List.fromList(bytes));
+        final val = bdata.getFloat32(0, Endian.little);
+        if (!val.isNaN && !val.isInfinite) {
+          return val;
+        }
+      }
+      return null;
     } catch (_) {
       return null;
     }
   }
 
-  // Parse MQ-135 Gas RAW 12-bit ADC payload (0-4095)
-  static int? parseGasPayload(List<int> bytes) {
+  // Parse MQ-2 / MQ-135 Gas RAW 12-bit ADC payload (0-4095)
+  // Protocol: ASCII string (e.g., "1234")
+  static int? parseGasPayload(List<int>? bytes) {
+    if (bytes == null || bytes.isEmpty) return null;
     try {
-      final str = String.fromCharCodes(bytes).trim();
-      final val = int.tryParse(str);
-      if (val != null) return val.clamp(0, 4095);
+      // 1. ASCII string parsing
+      final rawStr = String.fromCharCodes(bytes).trim();
+      final clean = rawStr.replaceAll(RegExp(r'[^\d]'), '');
+      if (clean.isNotEmpty) {
+        final val = int.tryParse(clean);
+        if (val != null) return val.clamp(0, 4095);
+      }
+
+      // 2. Binary fallbacks
+      if (bytes.length >= 4) {
+        final bdata = ByteData.sublistView(Uint8List.fromList(bytes));
+        return bdata.getUint32(0, Endian.little).clamp(0, 4095);
+      }
       if (bytes.length >= 2) {
         final raw = bytes[0] | (bytes[1] << 8);
         return raw.clamp(0, 4095);
       }
       if (bytes.length == 1) {
-        return bytes[0];
+        return bytes[0].clamp(0, 4095);
       }
       return null;
     } catch (_) {
@@ -135,29 +172,63 @@ abstract class AppUtils {
   }
 
   // Parse sampling interval from bytes
-  static int? parseIntervalPayload(List<int> bytes) {
+  // Protocol: ASCII string in seconds (min 2, max 3600, default 2)
+  static int? parseIntervalPayload(List<int>? bytes) {
+    if (bytes == null || bytes.isEmpty) return null;
     try {
-      // Try string format first (e.g., "5")
-      final str = String.fromCharCodes(bytes).trim();
-      return int.parse(str);
-    } catch (_) {
-      // Fallback: try 4-byte little-endian int
+      // 1. Try ASCII string format (e.g., "2", "5")
+      final rawStr = String.fromCharCodes(bytes).trim();
+      final clean = rawStr.replaceAll(RegExp(r'[^\d]'), '');
+      if (clean.isNotEmpty) {
+        final val = int.tryParse(clean);
+        if (val != null) return val.clamp(2, 3600);
+      }
+
+      // 2. Binary fallback
       if (bytes.length >= 4) {
-        return bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
+        final bdata = ByteData.sublistView(Uint8List.fromList(bytes));
+        return bdata.getUint32(0, Endian.little).clamp(2, 3600);
       }
       if (bytes.length >= 2) {
-        return bytes[0] | (bytes[1] << 8);
+        final raw = bytes[0] | (bytes[1] << 8);
+        return raw.clamp(2, 3600);
       }
       if (bytes.length == 1) {
-        return bytes[0];
+        return bytes[0].clamp(2, 3600);
       }
+      return null;
+    } catch (_) {
       return null;
     }
   }
 
-  // Encode sampling interval to bytes (string format matching ESP32 firmware)
+  // Parse Alert status ASCII string (e.g., "NORMAL", "ALERT", "TEMP_ALERT")
+  static String parseAlertPayload(List<int>? bytes) {
+    if (bytes == null || bytes.isEmpty) return 'NORMAL';
+    try {
+      final str = String.fromCharCodes(bytes).trim();
+      final clean = str.replaceAll(RegExp(r'[^\w\s-]'), '').trim();
+      if (clean.isEmpty) return 'NORMAL';
+      return clean.toUpperCase();
+    } catch (_) {
+      return 'NORMAL';
+    }
+  }
+
+  // Encode sampling interval to bytes (ASCII string format matching ESP32 firmware)
+  // Protocol: Minimum 2 seconds, Maximum 3600 seconds
   static List<int> encodeInterval(int seconds) {
-    return seconds.toString().codeUnits;
+    final clamped = seconds.clamp(2, 3600);
+    return clamped.toString().codeUnits;
+  }
+
+  // Escape a string value for safe RFC 4180 CSV export
+  static String escapeCsv(String? value) {
+    if (value == null) return '';
+    if (value.contains(',') || value.contains('"') || value.contains('\n') || value.contains('\r')) {
+      return '"${value.replaceAll('"', '""')}"';
+    }
+    return value;
   }
 }
 

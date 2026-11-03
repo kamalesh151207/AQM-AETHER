@@ -1,5 +1,5 @@
 // AQM AETHER — Industrial BLE Connection Manager
-// Architecture: Resilient Connection Management with Exponential Backoff
+// Architecture: Resilient Connection Management with Controlled Exponential Backoff
 // Resolves Android 147 GATT_CONNECTION_TIMEOUT and provides automatic recovery
 
 import 'dart:async';
@@ -48,7 +48,7 @@ class BleService {
   BluetoothCharacteristic? _intervalChar;
   BluetoothCharacteristic? _alertChar;
 
-  // Gas Sensor (MQ-135)
+  // Gas Sensor (MQ-2 / MQ-135)
   BluetoothCharacteristic? _gasChar;
 
   // MPU6050 Motion Sensors
@@ -74,6 +74,7 @@ class BleService {
   StreamSubscription<List<int>>? _gyroZSubscription;
 
   Timer? _reconnectTimer;
+  Completer<void>? _activeScanCompleter;
   int _reconnectAttempts = 0;
   bool _autoReconnect = true;
   bool _userExplicitDisconnect = false;
@@ -100,6 +101,7 @@ class BleService {
   bool get isConnecting => _isConnecting;
   bool get isScanning => _isScanning;
   String? get connectedDeviceId => _device?.remoteId.str;
+  BluetoothDevice? get connectedDevice => _device;
   int get reconnectAttempts => _reconnectAttempts;
 
   bool get serviceFound => _tempChar != null || _humidityChar != null;
@@ -133,52 +135,65 @@ class BleService {
         _cancelReconnectTimer();
         _cleanupSubscriptions();
         _isFullyConnected = false;
-        onStatusChanged?.call(DeviceConnectionStatus.error, 'Please enable Bluetooth');
+        onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, 'Bluetooth adapter is disabled. Please enable Bluetooth.');
       }
     });
   }
 
-  // ── Android Bluetooth Permissions ──────────────────────────────────────────
+  // ── Android Bluetooth & Location Permissions ───────────────────────────────
 
-  Future<bool> requestPermissions() async {
+  Future<bool> requestPermissions({bool forConnecting = false}) async {
     if (kIsWeb) return true;
     if (defaultTargetPlatform == TargetPlatform.android) {
       try {
-        _log('Validating Android Bluetooth & Location runtime permissions…');
+        _log('Checking Android runtime permissions (forConnecting: $forConnecting)…');
 
-        // Request modern Android 12+ permissions first
+        // Request modern Android 12+ permissions
         final scanStatus = await Permission.bluetoothScan.request();
-        final connectStatus = await Permission.bluetoothConnect.request();
-
-        // Also request location for older Android versions (<= API 30) or OEM stacks (Oppo, ColorOS)
         final locationStatus = await Permission.locationWhenInUse.request();
+
+        PermissionStatus connectStatus = PermissionStatus.granted;
+        if (forConnecting) {
+          connectStatus = await Permission.bluetoothConnect.request();
+        } else {
+          connectStatus = await Permission.bluetoothConnect.status;
+        }
 
         _log('Permissions: scan=$scanStatus, connect=$connectStatus, location=$locationStatus');
 
-        if (connectStatus.isPermanentlyDenied || scanStatus.isPermanentlyDenied) {
-          _log('Bluetooth permissions permanently denied', isError: true);
+        if (scanStatus.isPermanentlyDenied) {
+          _log('Bluetooth Scan permission permanently denied', isError: true);
           onStatusChanged?.call(
-            DeviceConnectionStatus.error,
-            'Bluetooth permissions permanently denied. Please allow in Android App Settings.',
+            DeviceConnectionStatus.connectionFailed,
+            'Bluetooth Scan permission permanently denied. Please enable in Android App Settings.',
           );
           return false;
         }
 
-        // On Android 12+, bluetoothConnect is strictly required to call connect()
-        if (connectStatus.isDenied) {
-          _log('BLUETOOTH_CONNECT permission was denied', isError: true);
+        if (forConnecting && connectStatus.isPermanentlyDenied) {
+          _log('Bluetooth Connect permission permanently denied', isError: true);
           onStatusChanged?.call(
-            DeviceConnectionStatus.error,
-            'Bluetooth Connect permission required to connect to AQM-Kamalesh',
+            DeviceConnectionStatus.connectionFailed,
+            'Bluetooth Connect permission permanently denied. Please enable in Android App Settings.',
           );
           return false;
         }
 
-        if (scanStatus.isDenied && locationStatus.isDenied) {
-          _log('Bluetooth Scan and Location permissions denied', isError: true);
+        final scanGranted = scanStatus.isGranted || locationStatus.isGranted;
+        if (!scanGranted) {
+          _log('Bluetooth Scan or Location permission not granted', isError: true);
           onStatusChanged?.call(
-            DeviceConnectionStatus.error,
-            'Bluetooth Scan or Location permission required to discover ESP32',
+            DeviceConnectionStatus.connectionFailed,
+            'Bluetooth Scan or Location permission is required to discover nearby BLE peripherals.',
+          );
+          return false;
+        }
+
+        if (forConnecting && !connectStatus.isGranted && !locationStatus.isGranted) {
+          _log('BLUETOOTH_CONNECT permission required for connection', isError: true);
+          onStatusChanged?.call(
+            DeviceConnectionStatus.connectionFailed,
+            'Bluetooth Connect permission is required to establish GATT link.',
           );
           return false;
         }
@@ -186,14 +201,13 @@ class BleService {
         try {
           final isLocationOn = await Permission.locationWhenInUse.serviceStatus.isEnabled;
           if (!isLocationOn) {
-            _log('Notice: Location Services (GPS) are currently turned OFF. On Oppo/Android phones, enabling Location in Quick Settings ensures all BLE devices are discovered.');
+            _log('Notice: Location Services (GPS) are OFF. Enabling GPS in Android Quick Settings is required on some phones to receive BLE scan responses.');
           }
         } catch (_) {}
 
-        _log('Bluetooth permissions verified and active');
         return true;
       } catch (e) {
-        _log('Permission request error: $e', isError: true);
+        _log('Permission check exception: $e', isError: true);
         return false;
       }
     }
@@ -202,70 +216,74 @@ class BleService {
 
   // ── Scanning ───────────────────────────────────────────────────────────────
 
-  Future<void> startScan({Duration? timeout, bool Function(ScanResult result)? onFoundTarget}) async {
+  Future<void> startScan({
+    Duration? timeout,
+    bool Function(ScanResult result)? onFoundTarget,
+  }) async {
+    // 1. Prevent overlapping scans
     if (_isScanning) {
-      _log('Scan already in progress. Re-using active scan.');
-      return;
+      _log('Active scan already running. Stopping previous scan cleanly before restarting.');
+      await stopScan();
+      await Future.delayed(const Duration(milliseconds: 200));
     }
 
-    final permGranted = await requestPermissions();
+    final permGranted = await requestPermissions(forConnecting: false);
     if (!permGranted) return;
 
     final btState = await FlutterBluePlus.adapterState.first;
     if (btState != BluetoothAdapterState.on) {
-      _log('Cannot start scan: Bluetooth is not ON ($btState)', isError: true);
-      onStatusChanged?.call(DeviceConnectionStatus.error, 'Please enable Bluetooth to discover devices');
+      _log('Cannot start scan: Bluetooth is disabled ($btState)', isError: true);
+      onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, 'Please enable Bluetooth on your device');
       return;
     }
 
     _isScanning = true;
+    _activeScanCompleter = Completer<void>();
     _deviceCache.clear();
     _scanResults.clear();
     onScanResult?.call([]);
     onStatusChanged?.call(DeviceConnectionStatus.scanning, null);
-    _log('BLE scanning started (androidUsesFineLocation: true, lowLatency)');
 
     final scanDuration = timeout ?? BleConstants.scanTimeout;
+    _log('BLE scanning started for ${scanDuration.inSeconds}s (fineLocation: true, lowLatency)');
 
     try {
       await FlutterBluePlus.stopScan();
       await _scanSubscription?.cancel();
 
-      final completer = Completer<void>();
-
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
         for (final r in results) {
           final id = r.device.remoteId.str;
-          final existing = _deviceCache[id];
+          _deviceCache[id] = r;
 
-          if (existing == null) {
-            _deviceCache[id] = r;
-            final name = r.device.platformName.isNotEmpty
-                ? r.device.platformName
-                : (r.advertisementData.advName.isNotEmpty
-                    ? r.advertisementData.advName
-                    : '(unnamed)');
-            _log('Discovered BLE peripheral: "$name" [$id] RSSI: ${r.rssi} dBm');
-          } else {
-            // Update device in cache with latest packet & RSSI
-            _deviceCache[id] = r;
-          }
-
-          // If target hunt requested (for direct connection)
+          // Target hunt for direct connection
           if (onFoundTarget != null && onFoundTarget(r)) {
             _log('Target device located during scan: ${r.device.platformName.isNotEmpty ? r.device.platformName : r.advertisementData.advName}');
-            if (!completer.isCompleted) completer.complete();
+            onStatusChanged?.call(DeviceConnectionStatus.deviceFound, null);
+            if (_activeScanCompleter != null && !_activeScanCompleter!.isCompleted) {
+              _activeScanCompleter!.complete();
+            }
           }
         }
 
+        // Sort scan results: AQM matching devices first, then by signal strength (RSSI)
+        final sortedList = _deviceCache.values.toList()
+          ..sort((a, b) {
+            final aIsAqm = _isAqmAdv(a);
+            final bIsAqm = _isAqmAdv(b);
+            if (aIsAqm && !bIsAqm) return -1;
+            if (!aIsAqm && bIsAqm) return 1;
+            return b.rssi.compareTo(a.rssi);
+          });
+
         _scanResults.clear();
-        _scanResults.addAll(_deviceCache.values);
+        _scanResults.addAll(sortedList);
         onScanResult?.call(List.unmodifiable(_scanResults));
       }, onError: (e) {
         _log('Scan results stream error: $e', isError: true);
       });
 
-      // Start scan with fine location and low latency for complete discovery on all Android phones
+      // Start low-latency continuous scan across all BLE peripherals
       await FlutterBluePlus.startScan(
         timeout: scanDuration,
         androidUsesFineLocation: true,
@@ -273,19 +291,14 @@ class BleService {
         continuousUpdates: true,
       );
 
-      if (onFoundTarget != null) {
-        await Future.any([
-          completer.future,
-          Future.delayed(scanDuration),
-        ]);
-      } else {
-        await Future.delayed(scanDuration);
-      }
+      // Await scan completion or manual cancellation
+      await Future.any([
+        _activeScanCompleter!.future,
+        Future.delayed(scanDuration),
+      ]);
     } catch (e) {
-      _log('Scan error: $e', isError: true);
-      _isScanning = false;
-      onStatusChanged?.call(DeviceConnectionStatus.error, 'Scan failed: $e');
-      return;
+      _log('Scan execution error: $e', isError: true);
+      onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, 'Scan failed: $e');
     } finally {
       await stopScan();
     }
@@ -295,28 +308,45 @@ class BleService {
     }
   }
 
+  bool _isAqmAdv(ScanResult r) {
+    final targetUuid = BleConstants.serviceUuid.replaceAll('-', '').toLowerCase();
+    for (final u in r.advertisementData.serviceUuids) {
+      if (u.str128.replaceAll('-', '').toLowerCase() == targetUuid) return true;
+    }
+    for (final entry in r.advertisementData.serviceData.entries) {
+      if (entry.key.str128.replaceAll('-', '').toLowerCase() == targetUuid) return true;
+    }
+    final name = (r.advertisementData.advName.isNotEmpty
+            ? r.advertisementData.advName
+            : r.device.platformName)
+        .toLowerCase();
+    return name.contains('aqm');
+  }
+
   Future<void> stopScan() async {
     if (!_isScanning && _scanSubscription == null) return;
     _isScanning = false;
     try {
       await FlutterBluePlus.stopScan();
     } catch (_) {}
+    if (_activeScanCompleter != null && !_activeScanCompleter!.isCompleted) {
+      _activeScanCompleter!.complete();
+    }
     await _scanSubscription?.cancel();
     _scanSubscription = null;
-    _log('BLE scanning stopped. Cached ${_deviceCache.length} peripherals.');
+    _log('BLE scan stopped. Discovered ${_deviceCache.length} peripherals in range.');
   }
 
   // ── Connection Management ──────────────────────────────────────────────────
 
   Future<void> connectToDevice(BluetoothDevice device, {bool isAqm = true}) async {
-    // 1. Prevent concurrent connection attempts
     if (_isConnecting) {
-      _log('Connection attempt already in progress to ${_device?.remoteId.str}. Ignoring overlapping request.');
+      _log('Connection already in progress to ${_device?.remoteId.str}. Rejecting concurrent request.');
       return;
     }
 
     _userExplicitDisconnect = false;
-    _autoReconnect = isAqm; // Generic devices do not auto-reconnect
+    _autoReconnect = isAqm;
     _isGenericDevice = !isAqm;
     _device = device;
     _reconnectAttempts = 0;
@@ -334,28 +364,27 @@ class BleService {
     _cancelReconnectTimer();
 
     onStatusChanged?.call(DeviceConnectionStatus.connecting, null);
-    _log('Connection initiated to peripheral [${_device!.remoteId.str}] (${_device!.platformName}) [isAQM: ${!_isGenericDevice}]');
+    _log('Connecting to [${_device!.remoteId.str}] (${_device!.platformName}) [isAQM: ${!_isGenericDevice}]');
 
     try {
-      // 1. Validate permissions before attempting connection
-      final permGranted = await requestPermissions();
+      // 1. Validate permissions
+      final permGranted = await requestPermissions(forConnecting: true);
       if (!permGranted) {
         _isConnecting = false;
         return;
       }
 
-      // 2. Tear down any active scan cleanly and wait for radio idle settling
+      // 2. Stop any active scan and settle Bluetooth controller (essential on Oppo/Android)
       if (_isScanning) {
         await stopScan();
       }
-      // Vital for Android/Oppo: Allow Bluetooth controller to switch from scanning to connection mode
       await Future.delayed(const Duration(milliseconds: 350));
 
-      // 3. Clean up prior subscriptions & characteristics
+      // 3. Clean up prior subscriptions
       await _cleanupSubscriptions();
       _cleanupCharacteristics();
 
-      // 4. If device is already in a dirty or dangling state, force disconnect first
+      // 4. Clear dirty connection states
       if (_device!.isConnected) {
         _log('Device in dirty connected state. Clearing prior GATT client…');
         try {
@@ -364,27 +393,28 @@ class BleService {
         } catch (_) {}
       }
 
-      // 5. Connect with controlled timeout (15 seconds)
-      _log('Establishing physical GATT link (timeout: ${BleConstants.connectTimeout.inSeconds}s)…');
+      // 5. Connect with 15s timeout
+      _log('Establishing GATT link (timeout: ${BleConstants.connectTimeout.inSeconds}s)…');
       await _device!.connect(
         timeout: BleConstants.connectTimeout,
         autoConnect: false,
       );
-      _log('Physical link established with ${_device!.remoteId.str}');
+      _log('GATT link established with ${_device!.remoteId.str}');
+      onStatusChanged?.call(DeviceConnectionStatus.connected, null);
 
-      // 6. Give Android GATT stack time to settle before querying services
+      // 6. Give GATT stack time to settle
       await Future.delayed(const Duration(milliseconds: 250));
 
-      // 7. Request balanced connection priority on Android to prevent supervision timeout 147
+      // 7. Request balanced connection priority to stabilize link
       if (defaultTargetPlatform == TargetPlatform.android) {
         try {
           await _device!.requestConnectionPriority(
             connectionPriorityRequest: ConnectionPriority.balanced,
           );
-          _log('Set ConnectionPriority.balanced to stabilize GATT link');
+          _log('Applied ConnectionPriority.balanced');
           await Future.delayed(const Duration(milliseconds: 150));
         } catch (e) {
-          _log('requestConnectionPriority non-fatal notice: $e');
+          _log('requestConnectionPriority notice: $e');
         }
       }
 
@@ -395,7 +425,7 @@ class BleService {
         await _discoverServices();
       }
 
-      // 9. Now that services, characteristics, and notifications are fully verified:
+      // 9. Fully connected and operational
       _isConnecting = false;
       _isFullyConnected = true;
       _reconnectAttempts = 0;
@@ -403,29 +433,28 @@ class BleService {
       // 10. Attach runtime connectionState monitor
       _setupConnectionMonitor();
 
-      onStatusChanged?.call(DeviceConnectionStatus.connected, null);
-      _log('Device fully connected, GATT exploration & telemetry active');
+      onStatusChanged?.call(DeviceConnectionStatus.ready, null);
+      _log('Device fully configured: telemetry notifications active (State: READY)');
     } catch (e) {
       _isConnecting = false;
       _isFullyConnected = false;
       _log('Connection failed at step: $e', isError: true);
 
-      // Parse error code for informative user messaging
       final errStr = e.toString().toLowerCase();
       String userError;
       if (errStr.contains('147') || errStr.contains('timeout')) {
-        userError = 'Connection failed: GATT connection timeout (Android 147). Peripheral may be busy or out of range.';
+        userError = 'GATT connection timeout (Android 147). Peripheral may be busy, sleeping, or out of range.';
       } else if (errStr.contains('133')) {
-        userError = 'Connection failed: Android GATT 133. Device radio busy.';
-      } else if (errStr.contains('securityexception') || errStr.contains('permission')) {
-        userError = 'Connection failed: Bluetooth permission denied.';
-      } else if (errStr.contains('service not found')) {
-        userError = 'Connection established, but AQM Service UUID was not found on device.';
+        userError = 'Android GATT 133 error. Bluetooth radio busy or advertising restarted.';
+      } else if (errStr.contains('permission') || errStr.contains('securityexception')) {
+        userError = 'Bluetooth permission denied.';
+      } else if (errStr.contains('aqm service not found')) {
+        userError = 'Connected, but peripheral does not advertise AQM Service UUID (...9001).';
       } else {
         userError = 'Connection error: ${e.toString()}';
       }
 
-      onStatusChanged?.call(DeviceConnectionStatus.error, userError);
+      onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, userError);
 
       if (_autoReconnect && !_userExplicitDisconnect) {
         _scheduleReconnect();
@@ -449,7 +478,6 @@ class BleService {
         String? readString;
         List<int>? readBytes;
 
-        // Safely read non-intrusively if readable
         if (c.properties.read) {
           try {
             readBytes = await c.read().timeout(const Duration(milliseconds: 600));
@@ -457,9 +485,7 @@ class BleService {
             if (readString.isEmpty) {
               readString = readBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
             }
-          } catch (_) {
-            // Some characteristics may require encryption/auth; ignore read errors safely
-          }
+          } catch (_) {}
         }
 
         charList.add(DiscoveredCharacteristicInfo(
@@ -488,7 +514,7 @@ class BleService {
     _connectionSubscription?.cancel();
     _connectionSubscription = _device?.connectionState.listen(
       (state) {
-        _log('GATT runtime state: $state');
+        _log('GATT runtime connectionState: $state');
         if (state == BluetoothConnectionState.disconnected) {
           if (_isFullyConnected && !_userExplicitDisconnect && !_isDisposing) {
             _isFullyConnected = false;
@@ -496,7 +522,7 @@ class BleService {
             _log('Unexpected disconnection from peripheral', isError: true);
             onStatusChanged?.call(
               DeviceConnectionStatus.disconnected,
-              'Connection to AQM-Kamalesh lost',
+              'Connection to ${_device?.platformName ?? "AQM peripheral"} lost',
             );
 
             if (_autoReconnect) {
@@ -511,10 +537,20 @@ class BleService {
     );
   }
 
-  // ── Reconnection Strategy with Exponential Backoff ─────────────────────────
+  // ── Reconnection Strategy with Controlled Backoff & Advertising Scan ────────
 
   void _scheduleReconnect({bool immediate = false}) {
-    if (_userExplicitDisconnect || _isDisposing || _device == null) return;
+    if (_userExplicitDisconnect || _isDisposing) return;
+
+    if (_reconnectAttempts >= BleConstants.maxAutoReconnectAttempts) {
+      _log('Max auto-reconnect attempts (${BleConstants.maxAutoReconnectAttempts}) reached. Halting auto-retry.', isError: true);
+      _cancelReconnectTimer();
+      onStatusChanged?.call(
+        DeviceConnectionStatus.connectionFailed,
+        'Reconnection halted after ${BleConstants.maxAutoReconnectAttempts} attempts. Tap RECONNECT to retry manually.',
+      );
+      return;
+    }
 
     _reconnectTimer?.cancel();
 
@@ -528,18 +564,46 @@ class BleService {
     }
 
     _reconnectAttempts++;
-    _log('Scheduling reconnect attempt $_reconnectAttempts after ${delay.inSeconds}s');
+    _log('Scheduling reconnect attempt $_reconnectAttempts/${BleConstants.maxAutoReconnectAttempts} in ${delay.inSeconds}s');
 
     onStatusChanged?.call(
       DeviceConnectionStatus.reconnecting,
-      'Connection interrupted. Reconnecting (attempt $_reconnectAttempts)…',
+      'Connection lost. Reconnecting (attempt $_reconnectAttempts/${BleConstants.maxAutoReconnectAttempts})…',
     );
 
     _reconnectTimer = Timer(delay, () async {
-      if (!_userExplicitDisconnect && !_isDisposing && _device != null) {
+      if (!_userExplicitDisconnect && !_isDisposing) {
         try {
           await _device?.disconnect(queue: false);
         } catch (_) {}
+
+        // If after 1st attempt the link failed, perform a quick 3s targeted scan to refresh the advertising handle
+        if (_reconnectAttempts >= 2) {
+          _log('Searching for refreshed ESP32 advertising instance…');
+          BluetoothDevice? refreshedDevice;
+          try {
+            final scanSub = FlutterBluePlus.scanResults.listen((results) {
+              for (final r in results) {
+                if (_isAqmAdv(r)) {
+                  refreshedDevice = r.device;
+                }
+              }
+            });
+            await FlutterBluePlus.startScan(
+              timeout: const Duration(seconds: 3),
+              androidUsesFineLocation: true,
+              androidScanMode: AndroidScanMode.lowLatency,
+            );
+            await Future.delayed(const Duration(seconds: 3));
+            await FlutterBluePlus.stopScan();
+            await scanSub.cancel();
+          } catch (_) {}
+
+          if (refreshedDevice != null) {
+            _device = refreshedDevice;
+            _log('Located fresh ESP32 advertising instance: [${_device!.remoteId.str}]');
+          }
+        }
 
         await Future.delayed(const Duration(milliseconds: 300));
         await _doConnect();
@@ -552,6 +616,10 @@ class BleService {
     _reconnectTimer = null;
   }
 
+  void resetReconnectAttempts() {
+    _reconnectAttempts = 0;
+  }
+
   // ── Disconnect ─────────────────────────────────────────────────────────────
 
   Future<void> disconnect() async {
@@ -562,6 +630,7 @@ class BleService {
     _cancelReconnectTimer();
 
     _log('Explicit disconnect requested by user');
+    onStatusChanged?.call(DeviceConnectionStatus.disconnecting, null);
 
     _connectionSubscription?.cancel();
     _connectionSubscription = null;
@@ -572,7 +641,7 @@ class BleService {
     try {
       await _device?.disconnect(queue: false);
     } catch (e) {
-      _log('Disconnect error: $e');
+      _log('Disconnect notice: $e');
     }
 
     _device = null;
@@ -586,20 +655,18 @@ class BleService {
     if (_device == null) return;
 
     onStatusChanged?.call(DeviceConnectionStatus.discoveringServices, null);
-    _log('Discovering GATT services…');
+    _log('Discovering GATT services on peripheral…');
 
     final services = await _device!.discoverServices();
     _log('Discovered ${services.length} GATT services on peripheral');
 
-    // Helper: Normalize UUIDs (lowercase, strip dashes) for flawless comparison
     String norm(String u) => u.replaceAll('-', '').toLowerCase();
 
     final targetServiceUuid = norm(BleConstants.serviceUuid);
     BluetoothService? aqmService;
 
     for (final s in services) {
-      final sNorm = norm(s.uuid.str128);
-      if (sNorm == targetServiceUuid) {
+      if (norm(s.uuid.str128) == targetServiceUuid) {
         aqmService = s;
         break;
       }
@@ -607,13 +674,12 @@ class BleService {
 
     if (aqmService == null) {
       final foundUuids = services.map((s) => s.uuid.str128).join(', ');
-      _log('AQM Service UUID ${BleConstants.serviceUuid} not found. Available services: [$foundUuids]', isError: true);
-      throw Exception('AQM Service not found. Discovered: [$foundUuids]');
+      _log('AQM Service UUID ${BleConstants.serviceUuid} not found. Discovered: [$foundUuids]', isError: true);
+      throw Exception('AQM Service not found on device');
     }
 
     _log('AQM GATT Service located: ${aqmService.uuid.str128}');
 
-    // Map characteristics using normalized UUIDs
     final targetTempUuid = norm(BleConstants.temperatureUuid);
     final targetHumUuid = norm(BleConstants.humidityUuid);
     final targetIntervalUuid = norm(BleConstants.samplingIntervalUuid);
@@ -630,59 +696,43 @@ class BleService {
       final cNorm = norm(c.uuid.str128);
       if (cNorm == targetTempUuid) {
         _tempChar = c;
-        _log('Temperature characteristic discovered');
+        _log('Temperature characteristic mapped');
       } else if (cNorm == targetHumUuid) {
         _humidityChar = c;
-        _log('Humidity characteristic discovered');
+        _log('Humidity characteristic mapped');
       } else if (cNorm == targetIntervalUuid) {
         _intervalChar = c;
-        _log('Sampling interval characteristic discovered');
+        _log('Sampling interval characteristic mapped');
       } else if (cNorm == targetAlertUuid) {
         _alertChar = c;
-        _log('Alert characteristic discovered');
+        _log('Alert characteristic mapped');
       } else if (cNorm == targetGasUuid) {
         _gasChar = c;
-        _log('MQ-135 Gas characteristic discovered');
+        _log('MQ-2 / MQ-135 Gas characteristic mapped');
       } else if (cNorm == targetAxUuid) {
         _accelXChar = c;
-        _log('MPU6050 Accel-X characteristic discovered');
       } else if (cNorm == targetAyUuid) {
         _accelYChar = c;
-        _log('MPU6050 Accel-Y characteristic discovered');
       } else if (cNorm == targetAzUuid) {
         _accelZChar = c;
-        _log('MPU6050 Accel-Z characteristic discovered');
       } else if (cNorm == targetGxUuid) {
         _gyroXChar = c;
-        _log('MPU6050 Gyro-X characteristic discovered');
       } else if (cNorm == targetGyUuid) {
         _gyroYChar = c;
-        _log('MPU6050 Gyro-Y characteristic discovered');
       } else if (cNorm == targetGzUuid) {
         _gyroZChar = c;
-        _log('MPU6050 Gyro-Z characteristic discovered');
       }
     }
 
     if (_tempChar == null && _humidityChar == null) {
-      _log('Neither temperature nor humidity characteristics were found', isError: true);
+      _log('Neither temperature nor humidity characteristics found', isError: true);
       throw Exception('Temperature and Humidity characteristics missing from AQM service');
-    }
-
-    if (_gasChar == null) {
-      _log('MQ-135 characteristic not present in GATT service.');
-    }
-    if (_accelXChar == null && _gyroXChar == null) {
-      _log('MPU6050 characteristics not present in GATT service (Hardware / firmware absent).');
     }
 
     onStatusChanged?.call(DeviceConnectionStatus.subscribingNotifications, null);
     _log('Subscribing to notification streams sequentially…');
 
-    // Sequential subscription with slight delay between descriptor writes
     await _subscribeNotifications();
-
-    // Read initial values so UI displays immediate data
     await _readInitialValues();
   }
 
@@ -707,7 +757,7 @@ class BleService {
           onTemperatureReceived?.call(value);
         }
       }, onError: (e) {
-        _log('Temperature notification stream error: $e', isError: true);
+        _log('Temperature notification error: $e', isError: true);
       });
 
       if (_tempChar!.properties.notify) {
@@ -716,7 +766,7 @@ class BleService {
           _log('Temperature notifications enabled');
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
-          _log('Temp setNotifyValue error: $e');
+          _log('Temp setNotifyValue notice: $e');
         }
       }
     }
@@ -730,7 +780,7 @@ class BleService {
           onHumidityReceived?.call(value);
         }
       }, onError: (e) {
-        _log('Humidity notification stream error: $e', isError: true);
+        _log('Humidity notification error: $e', isError: true);
       });
 
       if (_humidityChar!.properties.notify) {
@@ -739,7 +789,7 @@ class BleService {
           _log('Humidity notifications enabled');
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
-          _log('Humidity setNotifyValue error: $e');
+          _log('Humidity setNotifyValue notice: $e');
         }
       }
     }
@@ -748,12 +798,10 @@ class BleService {
     if (_alertChar != null) {
       _alertSubscription?.cancel();
       _alertSubscription = _alertChar!.onValueReceived.listen((bytes) {
-        final alert = String.fromCharCodes(bytes).trim();
-        if (alert.isNotEmpty) {
-          onAlertReceived?.call(alert);
-        }
+        final alert = AppUtils.parseAlertPayload(bytes);
+        onAlertReceived?.call(alert);
       }, onError: (e) {
-        _log('Alert notification stream error: $e', isError: true);
+        _log('Alert notification error: $e', isError: true);
       });
 
       if (_alertChar!.properties.notify) {
@@ -762,12 +810,12 @@ class BleService {
           _log('Alert notifications enabled');
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
-          _log('Alert setNotifyValue error: $e');
+          _log('Alert setNotifyValue notice: $e');
         }
       }
     }
 
-    // 4. MQ-135 Gas Stream
+    // 4. MQ-2 / MQ-135 Gas Stream
     if (_gasChar != null) {
       _gasSubscription?.cancel();
       _gasSubscription = _gasChar!.onValueReceived.listen((bytes) {
@@ -776,16 +824,16 @@ class BleService {
           onGasReceived?.call(val);
         }
       }, onError: (e) {
-        _log('Gas notification stream error: $e', isError: true);
+        _log('Gas notification error: $e', isError: true);
       });
 
       if (_gasChar!.properties.notify) {
         try {
           await _gasChar!.setNotifyValue(true);
-          _log('MQ-135 Gas notifications enabled');
+          _log('Gas notifications enabled');
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
-          _log('Gas setNotifyValue error: $e');
+          _log('Gas setNotifyValue notice: $e');
         }
       }
     }
@@ -825,7 +873,7 @@ class BleService {
   }
 
   Future<void> _readInitialValues() async {
-    _log('Reading initial characteristic values from peripheral…');
+    _log('Reading initial values from characteristics…');
 
     // Read initial temperature
     if (_tempChar != null && _tempChar!.properties.read) {
@@ -833,12 +881,12 @@ class BleService {
         final bytes = await _tempChar!.read();
         final value = AppUtils.parseFloatPayload(bytes);
         if (value != null) {
-          _log('Initial Temperature read: $value°C');
+          _log('Initial Temperature: $value°C');
           onTemperatureReceived?.call(value);
         }
         await Future.delayed(const Duration(milliseconds: 60));
       } catch (e) {
-        _log('Initial temperature read non-fatal error: $e');
+        _log('Initial temperature read notice: $e');
       }
     }
 
@@ -848,12 +896,12 @@ class BleService {
         final bytes = await _humidityChar!.read();
         final value = AppUtils.parseFloatPayload(bytes);
         if (value != null) {
-          _log('Initial Humidity read: $value%');
+          _log('Initial Humidity: $value%');
           onHumidityReceived?.call(value);
         }
         await Future.delayed(const Duration(milliseconds: 60));
       } catch (e) {
-        _log('Initial humidity read non-fatal error: $e');
+        _log('Initial humidity read notice: $e');
       }
     }
 
@@ -863,12 +911,12 @@ class BleService {
         final bytes = await _intervalChar!.read();
         final value = AppUtils.parseIntervalPayload(bytes);
         if (value != null) {
-          _log('Initial Sampling Interval read: ${value}s');
+          _log('Initial Sampling Interval: ${value}s');
           onIntervalReceived?.call(value);
         }
         await Future.delayed(const Duration(milliseconds: 60));
       } catch (e) {
-        _log('Initial interval read non-fatal error: $e');
+        _log('Initial interval read notice: $e');
       }
     }
 
@@ -876,27 +924,25 @@ class BleService {
     if (_alertChar != null && _alertChar!.properties.read) {
       try {
         final bytes = await _alertChar!.read();
-        final alert = String.fromCharCodes(bytes).trim();
-        if (alert.isNotEmpty) {
-          _log('Initial Alert Status read: $alert');
-          onAlertReceived?.call(alert);
-        }
+        final alert = AppUtils.parseAlertPayload(bytes);
+        _log('Initial Alert Status: $alert');
+        onAlertReceived?.call(alert);
       } catch (e) {
-        _log('Initial alert read non-fatal error: $e');
+        _log('Initial alert read notice: $e');
       }
     }
 
-    // Read initial MQ-135 Gas
+    // Read initial Gas
     if (_gasChar != null && _gasChar!.properties.read) {
       try {
         final bytes = await _gasChar!.read();
         final val = AppUtils.parseGasPayload(bytes);
         if (val != null) {
-          _log('Initial MQ-135 Gas read: $val ADC');
+          _log('Initial Gas RAW ADC: $val');
           onGasReceived?.call(val);
         }
       } catch (e) {
-        _log('Initial gas read non-fatal error: $e');
+        _log('Initial gas read notice: $e');
       }
     }
 
@@ -946,7 +992,7 @@ class BleService {
 
   Future<bool> writeSamplingInterval(int seconds) async {
     if (_intervalChar == null) {
-      _log('Interval characteristic not discovered', isError: true);
+      _log('Interval characteristic not available', isError: true);
       return false;
     }
 
@@ -958,7 +1004,7 @@ class BleService {
 
     try {
       final bytes = AppUtils.encodeInterval(seconds);
-      _log('Writing interval $seconds seconds to ESP32: "$seconds"');
+      _log('Writing sampling interval $seconds s (ASCII payload) to ESP32…');
 
       if (_intervalChar!.properties.write) {
         await _intervalChar!.write(bytes, withoutResponse: false);
@@ -989,7 +1035,7 @@ class BleService {
   void handleAppResume() {
     _log('App resumed to foreground');
     if (!_userExplicitDisconnect && _device != null && !isConnected && !_isConnecting) {
-      _log('Device disconnected during background. Triggering reconnect.');
+      _log('Triggering foreground reconnect attempt');
       _scheduleReconnect(immediate: true);
     }
   }

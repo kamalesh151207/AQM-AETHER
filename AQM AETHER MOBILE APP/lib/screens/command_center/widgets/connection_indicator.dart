@@ -58,17 +58,21 @@ class _ConnectionIndicatorState extends State<ConnectionIndicator>
 
     switch (widget.status) {
       case DeviceConnectionStatus.connected:
+      case DeviceConnectionStatus.ready:
         _pulseController.repeat();
         break;
       case DeviceConnectionStatus.scanning:
+      case DeviceConnectionStatus.deviceFound:
       case DeviceConnectionStatus.connecting:
       case DeviceConnectionStatus.discoveringServices:
       case DeviceConnectionStatus.subscribingNotifications:
       case DeviceConnectionStatus.reconnecting:
+      case DeviceConnectionStatus.disconnecting:
         _rotateController.repeat();
         break;
       case DeviceConnectionStatus.disconnected:
       case DeviceConnectionStatus.idle:
+      case DeviceConnectionStatus.connectionFailed:
       case DeviceConnectionStatus.error:
         break;
     }
@@ -84,14 +88,18 @@ class _ConnectionIndicatorState extends State<ConnectionIndicator>
   Color get _dotColor {
     switch (widget.status) {
       case DeviceConnectionStatus.connected:
+      case DeviceConnectionStatus.ready:
         return AppColors.success;
       case DeviceConnectionStatus.reconnecting:
+      case DeviceConnectionStatus.deviceFound:
         return AppColors.warning;
       case DeviceConnectionStatus.scanning:
       case DeviceConnectionStatus.connecting:
       case DeviceConnectionStatus.discoveringServices:
       case DeviceConnectionStatus.subscribingNotifications:
+      case DeviceConnectionStatus.disconnecting:
         return AppColors.accentSecondary;
+      case DeviceConnectionStatus.connectionFailed:
       case DeviceConnectionStatus.error:
         return AppColors.critical;
       case DeviceConnectionStatus.disconnected:
@@ -134,8 +142,9 @@ class _ConnectionIndicatorState extends State<ConnectionIndicator>
             ),
 
           // Rotating arc for active/connecting states
-          if (widget.status != DeviceConnectionStatus.connected &&
+          if (!widget.status.isConnected &&
               widget.status != DeviceConnectionStatus.disconnected &&
+              widget.status != DeviceConnectionStatus.connectionFailed &&
               widget.status != DeviceConnectionStatus.error)
             AnimatedBuilder(
               animation: _rotateController,

@@ -214,14 +214,18 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
     Color color;
     switch (status) {
       case DeviceConnectionStatus.connected:
+      case DeviceConnectionStatus.ready:
         color = AppColors.success;
         break;
       case DeviceConnectionStatus.connecting:
+      case DeviceConnectionStatus.deviceFound:
       case DeviceConnectionStatus.discoveringServices:
       case DeviceConnectionStatus.subscribingNotifications:
       case DeviceConnectionStatus.reconnecting:
+      case DeviceConnectionStatus.disconnecting:
         color = AppColors.warning;
         break;
+      case DeviceConnectionStatus.connectionFailed:
       case DeviceConnectionStatus.error:
         color = AppColors.critical;
         break;
