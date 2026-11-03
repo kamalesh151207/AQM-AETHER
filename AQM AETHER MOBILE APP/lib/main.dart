@@ -94,10 +94,13 @@ class _AqmAetherAppState extends State<AqmAetherApp> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     return MaterialApp(
       title: 'AQM AETHER',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: settings.darkTheme ? ThemeMode.dark : ThemeMode.light,
       home: const MainShell(),
     );
   }

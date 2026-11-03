@@ -1,5 +1,5 @@
 // AQM AETHER — Premium Card Surface Component
-// Clean white surface, hairline border, soft subtle shadow
+// Clean surface, hairline border, subtle shadow, light & dark mode adaptive
 
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
@@ -27,18 +27,22 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveRadius = borderRadius ?? AppRadius.lg;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final defaultBg = isDark ? AppColors.darkSurface : AppColors.cardBackground;
+    final defaultBorder = isDark ? AppColors.darkBorder : AppColors.border;
 
     final container = Container(
       margin: margin,
       padding: padding ?? const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
-        color: color ?? AppColors.cardBackground,
+        color: color ?? defaultBg,
         borderRadius: BorderRadius.circular(effectiveRadius),
         border: Border.all(
-          color: borderColor ?? AppColors.border,
+          color: borderColor ?? defaultBorder,
           width: 1,
         ),
-        boxShadow: AppShadows.card,
+        boxShadow: isDark ? const [] : AppShadows.card,
       ),
       child: child,
     );
@@ -57,4 +61,3 @@ class AppCard extends StatelessWidget {
     return container;
   }
 }
-

@@ -1,10 +1,10 @@
 // AQM AETHER — Settings & System Configuration
-// Clean Modern Industrial White Interface
+// Clean Modern Industrial Interface (Light & Dark Theme Aware)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-import '../../core/constants/ble_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_utils.dart';
 import '../../providers/device_provider.dart';
@@ -25,6 +25,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _intervalSliderValue = 2;
   bool _isWritingInterval = false;
 
+  PermissionStatus _scanStatus = PermissionStatus.denied;
+  PermissionStatus _connectStatus = PermissionStatus.denied;
+  PermissionStatus _locationStatus = PermissionStatus.denied;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +36,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (current != null && current >= 1 && current <= 3600) {
       _intervalSliderValue = current;
     }
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    final scan = await Permission.bluetoothScan.status;
+    final connect = await Permission.bluetoothConnect.status;
+    final loc = await Permission.location.status;
+    if (mounted) {
+      setState(() {
+        _scanStatus = scan;
+        _connectStatus = connect;
+        _locationStatus = loc;
+      });
+    }
+  }
+
+  Future<void> _requestPermissions() async {
+    await [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.location,
+    ].request();
+    await _checkPermissions();
   }
 
   Future<void> _applySamplingInterval(BuildContext context, DeviceProvider provider) async {
@@ -72,17 +99,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(ctx).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: const BorderSide(color: AppColors.border, width: 1),
+          side: BorderSide(color: Theme.of(ctx).dividerColor, width: 1),
         ),
         title: const Text(
           'Clear Recorded History',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
           ),
         ),
         content: const Text(
@@ -129,8 +155,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.backgroundPrimary;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Consumer4<DeviceProvider, MonitoringProvider, SettingsProvider, ThresholdService>(
           builder: (context, deviceProvider, monitoringProvider, settingsProvider, thresholdService, _) {
@@ -143,41 +172,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               children: [
                 // ── Header ───────────────────────────────────────────────────
-                _buildHeader(),
+                _buildHeader(context),
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 1: Intelligent Threshold Configuration ───────────
+                // ── Section 1: Appearance & Theme ────────────────────────────
+                _buildThemeSelectionCard(context, settingsProvider),
+
+                const SizedBox(height: AppSpacing.base),
+
+                // ── Section 2: Bluetooth Hardware Permissions ────────────────
+                _buildBluetoothPermissionsCard(context),
+
+                const SizedBox(height: AppSpacing.base),
+
+                // ── Section 3: Sampling Interval Control (2s to 3600s) ───────
+                _buildIntervalConfigCard(context, deviceProvider, isConnected),
+
+                const SizedBox(height: AppSpacing.base),
+
+                // ── Section 4: Intelligent Threshold Configuration ───────────
                 _buildThresholdConfigCard(context, thresholdService),
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 2: Audible Alarm Preferences ─────────────────────
+                // ── Section 5: Audible Alarm Preferences ─────────────────────
                 _buildAlarmPreferencesCard(context, thresholdService),
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 3: Smart Android System Notifications ────────────
+                // ── Section 6: Smart Android System Notifications ────────────
                 _buildNotificationPreferencesCard(context),
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 4: Sampling Interval Control ─────────────────────
-                _buildIntervalConfigCard(deviceProvider, isConnected),
-
-                const SizedBox(height: AppSpacing.base),
-
-                // ── Section 5: Connection Reliability & Diagnostics ──────────
+                // ── Section 7: Connection Reliability & Diagnostics ──────────
                 _buildReliabilityMonitorCard(deviceProvider),
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 6: Data Persistence & Storage ────────────────────
+                // ── Section 8: Data Persistence & SQLite Storage ─────────────
                 _buildDataPersistenceCard(context, monitoringProvider, settingsProvider),
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 7: About AQM AETHER ──────────────────────────────
+                // ── Section 9: About AQM AETHER ──────────────────────────────
                 _buildAboutCard(),
 
                 const SizedBox(height: AppSpacing.xl),
@@ -189,8 +228,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return const Column(
+  Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -198,13 +240,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: titleColor,
             letterSpacing: -0.5,
           ),
         ),
-        SizedBox(height: 2),
-        Text(
-          'Threshold limits, audio alarms & device parameters',
+        const SizedBox(height: 2),
+        const Text(
+          'Hardware parameters, BLE permissions, alarms & storage',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.textSecondary,
@@ -215,7 +257,409 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 1. Threshold Configuration Card ────────────────────────────────────────
+  // ── 1. Theme Selection Card ────────────────────────────────────────────────
+
+  Widget _buildThemeSelectionCard(BuildContext context, SettingsProvider settings) {
+    final isDark = settings.darkTheme;
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.accentSecondary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: const Icon(Icons.palette_outlined, size: 16, color: AppColors.accentSecondary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              const Text(
+                'APPEARANCE & THEME',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Choose your preferred telemetry visual mode. Changes take effect instantly across all screens.',
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          Row(
+            children: [
+              // Light Mode Pill
+              Expanded(
+                child: InkWell(
+                  onTap: () => settings.setDarkTheme(false),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: !isDark ? AppColors.accentSecondary.withOpacity(0.1) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: !isDark ? AppColors.accentSecondary : AppColors.border,
+                        width: !isDark ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.light_mode_rounded,
+                          size: 16,
+                          color: !isDark ? AppColors.accentSecondary : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'LIGHT MODE',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: !isDark ? AppColors.accentSecondary : AppColors.textSecondary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Dark Mode Pill
+              Expanded(
+                child: InkWell(
+                  onTap: () => settings.setDarkTheme(true),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.accentSecondary.withOpacity(0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(
+                        color: isDark ? AppColors.accentSecondary : AppColors.border,
+                        width: isDark ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.dark_mode_rounded,
+                          size: 16,
+                          color: isDark ? AppColors.accentSecondary : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'DARK MODE',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? AppColors.accentSecondary : AppColors.textSecondary,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 2. Bluetooth Hardware Permissions Card ─────────────────────────────────
+
+  Widget _buildBluetoothPermissionsCard(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentPrimary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const Icon(Icons.security_rounded, size: 16, color: AppColors.accentPrimary),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Text(
+                    'BLUETOOTH PERMISSIONS',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                onPressed: _checkPermissions,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                tooltip: 'Refresh Status',
+                color: AppColors.textSecondary,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Android 12+ requires runtime Bluetooth Scan & Connect permissions. Location is required for beacon discovery:',
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          _buildPermissionStatusRow('Bluetooth Scan (BLUETOOTH_SCAN)', _scanStatus),
+          const Divider(height: 16, color: AppColors.borderSubtle),
+          _buildPermissionStatusRow('Bluetooth Connect (BLUETOOTH_CONNECT)', _connectStatus),
+          const Divider(height: 16, color: AppColors.borderSubtle),
+          _buildPermissionStatusRow('Precise Location (ACCESS_FINE_LOCATION)', _locationStatus),
+          const SizedBox(height: AppSpacing.base),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _requestPermissions,
+                  icon: const Icon(Icons.lock_open_rounded, size: 14),
+                  label: const Text('REQUEST PERMISSIONS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: openAppSettings,
+                icon: const Icon(Icons.settings_outlined, size: 14),
+                label: const Text('APP SETTINGS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  side: const BorderSide(color: AppColors.border),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionStatusRow(String name, PermissionStatus status) {
+    final isGranted = status.isGranted;
+    final color = isGranted ? AppColors.normal : AppColors.critical;
+    final label = isGranted ? 'GRANTED' : (status.isPermanentlyDenied ? 'DENIED' : 'PENDING');
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            name,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(isGranted ? Icons.check_circle_rounded : Icons.error_rounded, size: 12, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── 3. Sampling Interval Card (2s to 3600s) ────────────────────────────────
+
+  Widget _buildIntervalConfigCard(BuildContext context, DeviceProvider deviceProvider, bool isConnected) {
+    final activeInterval = deviceProvider.device.samplingInterval ?? 2;
+    final presets = [2, 5, 10, 30, 60, 300, 3600];
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentSecondary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: const Icon(Icons.timer_outlined, size: 16, color: AppColors.accentSecondary),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  const Text(
+                    'ESP32 SAMPLING INTERVAL',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accentSecondaryLight,
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: Text(
+                  'ACTIVE: ${activeInterval}s',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accentSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Adjust how frequently the ESP32 samples and broadcasts sensor telemetry (2s to 3600s):',
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          // Presets
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: presets.map((sec) {
+              final isPresetSelected = _intervalSliderValue == sec;
+              final label = sec >= 3600
+                  ? '${sec ~/ 3600}h'
+                  : sec >= 60
+                      ? '${sec ~/ 60}m'
+                      : '${sec}s';
+
+              return InkWell(
+                onTap: () => setState(() => _intervalSliderValue = sec),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isPresetSelected ? AppColors.accentSecondary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(
+                      color: isPresetSelected ? AppColors.accentSecondary : AppColors.border,
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isPresetSelected ? Colors.white : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          // Slider (2s to 60s interactive slider, or extended preset)
+          Row(
+            children: [
+              const Text('2s', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+              Expanded(
+                child: Slider(
+                  value: _intervalSliderValue.clamp(2, 60).toDouble(),
+                  min: 2.0,
+                  max: 60.0,
+                  divisions: 58,
+                  activeColor: AppColors.accentSecondary,
+                  inactiveColor: AppColors.borderSubtle,
+                  label: '${_intervalSliderValue}s',
+                  onChanged: (val) => setState(() => _intervalSliderValue = val.round()),
+                ),
+              ),
+              const Text('60s', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Configured: $_intervalSliderValue seconds',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              ElevatedButton(
+                onPressed: (!isConnected || _isWritingInterval)
+                    ? null
+                    : () => _applySamplingInterval(context, deviceProvider),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentSecondary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+                child: _isWritingInterval
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('APPLY TO ESP32', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── 4. Threshold Configuration Card ────────────────────────────────────────
 
   Widget _buildThresholdConfigCard(
     BuildContext context,
@@ -245,7 +689,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -389,7 +832,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 2. Audible Alarm Preferences Card ──────────────────────────────────────
+  // ── 5. Audible Alarm Preferences Card ──────────────────────────────────────
 
   Widget _buildAlarmPreferencesCard(
     BuildContext context,
@@ -423,7 +866,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -467,7 +909,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
@@ -498,7 +939,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
@@ -537,7 +977,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
@@ -566,7 +1005,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 3. Smart Android Notifications Preferences Card ────────────────────────
+  // ── 6. Smart Android Notifications Preferences Card ────────────────────────
 
   Widget _buildNotificationPreferencesCard(BuildContext context) {
     final notifService = NotificationService();
@@ -595,11 +1034,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       const Text(
-                        'ANDROID SYSTEM NOTIFICATIONS',
+                        'SYSTEM NOTIFICATIONS',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -631,7 +1069,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               const Text(
-                'Customize notifications across 3 dedicated Android channels (Critical Alerts, Device Status, Monitoring Updates):',
+                'Customize alerts across Android system channels (Critical Alerts, Device Status, Updates):',
                 style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -690,7 +1128,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.backgroundPrimary,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -704,14 +1141,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
                     ElevatedButton(
                       onPressed: () => notifService.openAndroidSettings(),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.textPrimary,
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         minimumSize: const Size(60, 26),
@@ -747,7 +1183,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -772,152 +1207,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 4. Sampling Interval Card ──────────────────────────────────────────────
-
-  Widget _buildIntervalConfigCard(DeviceProvider deviceProvider, bool isConnected) {
-    final activeInterval = deviceProvider.device.samplingInterval ?? 2;
-    final presets = [1, 2, 5, 10, 30];
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.accentSecondary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: const Icon(Icons.timer_outlined, size: 16, color: AppColors.accentSecondary),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Text(
-                    'ESP32 SAMPLING INTERVAL',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.accentSecondaryLight,
-                  borderRadius: BorderRadius.circular(AppRadius.xs),
-                ),
-                child: Text(
-                  'ACTIVE: ${activeInterval}s',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.accentSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Adjust how frequently the ESP32 samples and broadcasts sensor telemetry (1s to 3600s):',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.base),
-          // Presets
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: presets.map((sec) {
-              final isPresetSelected = _intervalSliderValue == sec;
-              return InkWell(
-                onTap: () => setState(() => _intervalSliderValue = sec),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isPresetSelected ? AppColors.accentSecondary : AppColors.backgroundPrimary,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: Border.all(
-                      color: isPresetSelected ? AppColors.accentSecondary : AppColors.border,
-                    ),
-                  ),
-                  child: Text(
-                    '${sec}s',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isPresetSelected ? Colors.white : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: AppSpacing.base),
-          // Slider
-          Row(
-            children: [
-              const Text('1s', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-              Expanded(
-                child: Slider(
-                  value: _intervalSliderValue.toDouble().clamp(1.0, 60.0),
-                  min: 1.0,
-                  max: 60.0,
-                  divisions: 59,
-                  activeColor: AppColors.accentSecondary,
-                  inactiveColor: AppColors.borderSubtle,
-                  label: '${_intervalSliderValue}s',
-                  onChanged: (val) => setState(() => _intervalSliderValue = val.round()),
-                ),
-              ),
-              const Text('60s', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Selected: $_intervalSliderValue seconds',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              ElevatedButton(
-                onPressed: (!isConnected || _isWritingInterval)
-                    ? null
-                    : () => _applySamplingInterval(context, deviceProvider),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentSecondary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-                ),
-                child: _isWritingInterval
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('APPLY TO ESP32', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── 5. Reliability Monitor Card ────────────────────────────────────────────
+  // ── 7. Reliability Monitor Card ────────────────────────────────────────────
 
   Widget _buildReliabilityMonitorCard(DeviceProvider provider) {
     final dev = provider.device;
@@ -945,7 +1235,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -957,7 +1246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildTelemetryMetricRow(
             'Unexpected Disconnections',
             '${dev.unexpectedDisconnections}',
-            valueColor: dev.unexpectedDisconnections > 0 ? AppColors.warning : AppColors.textPrimary,
+            valueColor: dev.unexpectedDisconnections > 0 ? AppColors.warning : null,
           ),
           const Divider(height: 16, color: AppColors.borderSubtle),
           _buildTelemetryMetricRow('Reconnection Attempts', '${dev.totalReconnectionAttempts}'),
@@ -988,7 +1277,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(AppSpacing.sm),
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.backgroundPrimary,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 border: Border.all(color: AppColors.border),
               ),
@@ -1015,7 +1303,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 6. Data Persistence Card ───────────────────────────────────────────────
+  // ── 8. Data Persistence Card ───────────────────────────────────────────────
 
   Widget _buildDataPersistenceCard(
     BuildContext context,
@@ -1046,7 +1334,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -1065,7 +1352,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
@@ -1094,11 +1380,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
-                    '$readingCount sample${readingCount == 1 ? "" : "s"} indexed',
+                    '$readingCount sample${readingCount == 1 ? "" : "s"} indexed in SQLite',
                     style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
@@ -1119,7 +1404,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 7. About AQM AETHER ────────────────────────────────────────────────────
+  // ── 9. About AQM AETHER ────────────────────────────────────────────────────
 
   Widget _buildAboutCard() {
     return AppCard(
@@ -1146,7 +1431,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -1166,7 +1450,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Text(
             'AQM AETHER is an IoT environmental monitoring platform interfacing with ESP32 microcontrollers via Bluetooth Low Energy to provide real-time telemetry, threshold alerts, and persistent historical tracking.',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               color: AppColors.textSecondary,
               height: 1.45,
             ),
@@ -1178,7 +1462,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
               letterSpacing: 0.3,
             ),
           ),
@@ -1194,12 +1477,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
               letterSpacing: 0.3,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          _buildTelemetryMetricRow('Application Version', 'v${AppConstants.appVersion} (Production Build)'),
+          _buildTelemetryMetricRow('Application Version', 'v1.0.0 (Production Build)'),
           const Divider(height: 12, color: AppColors.borderSubtle),
           _buildTelemetryMetricRow('Target BLE Peripheral', 'AQM-Kamalesh'),
           const Divider(height: 12, color: AppColors.borderSubtle),
@@ -1233,7 +1515,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: valueColor ?? AppColors.textPrimary,
+              color: valueColor,
             ),
             textAlign: TextAlign.right,
             maxLines: 2,

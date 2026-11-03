@@ -1,24 +1,36 @@
 // AQM AETHER — Analytics & Statistical Intelligence
-// Clean Modern Industrial White Interface
+// Comprehensive sensor analytics for Temperature, Humidity, and MQ-2 Gas Raw ADC
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/app_utils.dart';
 import '../../models/sensor_reading.dart';
 import '../../providers/monitoring_provider.dart';
-import '../../services/threshold/threshold_service.dart';
 import '../../widgets/common/app_card.dart';
+import '../../widgets/common/empty_state.dart';
 import '../../widgets/common/export_csv_button.dart';
 
 enum AnalyticsRange {
-  today('Today'),
-  last24Hours('24 Hours'),
-  last7Days('7 Days');
+  oneHour('1 Hour', Duration(hours: 1)),
+  sixHours('6 Hours', Duration(hours: 6)),
+  twentyFourHours('24 Hours', Duration(hours: 24)),
+  sevenDays('7 Days', Duration(days: 7));
 
   final String label;
-  const AnalyticsRange(this.label);
+  final Duration duration;
+  const AnalyticsRange(this.label, this.duration);
+}
+
+enum SelectedMetric {
+  temperature('Temperature (°C)', AppColors.accentTemperature),
+  humidity('Humidity (%)', AppColors.accentHumidity),
+  gas('MQ-2 Raw ADC', AppColors.accentGas);
+
+  final String title;
+  final Color color;
+  const SelectedMetric(this.title, this.color);
 }
 
 class AnalyticsScreen extends StatefulWidget {
@@ -29,58 +41,45 @@ class AnalyticsScreen extends StatefulWidget {
 }
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
-  AnalyticsRange _selectedRange = AnalyticsRange.today;
+  AnalyticsRange _selectedRange = AnalyticsRange.twentyFourHours;
+  SelectedMetric _selectedMetric = SelectedMetric.temperature;
   bool _isExporting = false;
 
   List<SensorReading> _getFilteredReadings(MonitoringProvider provider) {
-    switch (_selectedRange) {
-      case AnalyticsRange.today:
-        final now = DateTime.now();
-        final startOfDay = DateTime(now.year, now.month, now.day);
-        return provider.readings
-            .where((r) => r.timestamp.isAfter(startOfDay))
-            .toList();
-      case AnalyticsRange.last24Hours:
-        return provider.readingsLast24Hours;
-      case AnalyticsRange.last7Days:
-        return provider.readingsLast7Days;
-    }
+    final cutoff = DateTime.now().subtract(_selectedRange.duration);
+    return provider.readings
+        .where((r) => r.timestamp.isAfter(cutoff))
+        .toList();
   }
 
-  Future<void> _handleExportCsv(
-      BuildContext context, MonitoringProvider provider) async {
+  Future<void> _handleExportCsv(BuildContext context, MonitoringProvider provider) async {
     setState(() => _isExporting = true);
     try {
       final success = await provider.exportCsv();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(
-                  success ? Icons.check_circle_rounded : Icons.info_outline,
-                  color: success ? AppColors.success : AppColors.warning,
-                  size: 20,
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: success ? AppColors.primary : AppColors.warning,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          content: Row(
+            children: [
+              Icon(
+                success ? Icons.check_circle_rounded : Icons.info_outline,
+                color: success ? AppColors.success : Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  success ? 'CSV telemetry exported successfully' : 'No telemetry records to export',
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  success
-                      ? 'CSV telemetry exported successfully'
-                      : 'No telemetry records to export',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.textPrimary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
+              ),
+            ],
           ),
-        );
-      }
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isExporting = false);
     }
@@ -89,7 +88,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
       body: SafeArea(
         child: Consumer<MonitoringProvider>(
           builder: (context, monitoringProvider, _) {
@@ -101,29 +99,36 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 vertical: AppSpacing.base,
               ),
               children: [
-                // ── Header & CSV Export Action ───────────────────────────────
+                // Header
                 _buildHeader(context, monitoringProvider),
-
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Date Range Selector ──────────────────────────────────────
+                // Time Range Selector (1h, 6h, 24h, 7d)
                 _buildRangeSelector(),
-
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Statistical KPI Cards ────────────────────────────────────
-                _buildKpiMetrics(readings),
+                if (readings.isEmpty)
+                  const EmptyState(
+                    icon: Icons.insights_rounded,
+                    title: 'No Historical Data in Range',
+                    message: 'Connect to the ESP32 (AQM-Kamalesh) to stream and record sensor readings.',
+                  )
+                else ...[
+                  // Statistical KPI Cards
+                  _buildKpiMetrics(readings),
+                  const SizedBox(height: AppSpacing.base),
 
-                const SizedBox(height: AppSpacing.base),
+                  // Sensor Metric Switcher for Chart
+                  _buildMetricSelector(),
+                  const SizedBox(height: AppSpacing.md),
 
-                // ── Regression & Trend Analysis ──────────────────────────────
-                _buildTrendAnalysis(readings),
+                  // Interactive Chart
+                  _buildChartCard(readings),
+                  const SizedBox(height: AppSpacing.base),
 
-                const SizedBox(height: AppSpacing.base),
-
-                // ── Smart Insights Card ──────────────────────────────────────
-                _buildSmartInsights(monitoringProvider),
-
+                  // Data Availability & Quality Card
+                  _buildDataQualityCard(readings),
+                ],
                 const SizedBox(height: AppSpacing.xl),
               ],
             );
@@ -144,19 +149,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 'ANALYTICS',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.4,
                 ),
               ),
               SizedBox(height: 2),
               Text(
-                'Environmental statistics & trends',
+                'Sensor telemetry statistics & historical analysis',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -165,7 +170,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        // Export CSV Button
         ExportCsvButton(
           isExporting: _isExporting,
           onPressed: () => _handleExportCsv(context, provider),
@@ -187,25 +191,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : AppColors.cardBackground,
+                  color: isSelected ? AppColors.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.accentAnalytics
-                        : AppColors.border,
-                    width: isSelected ? 1.5 : 1.0,
+                    color: isSelected ? AppColors.primary : AppColors.border,
                   ),
-                  boxShadow: isSelected ? AppShadows.card : null,
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   range.label,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600,
-                    color: isSelected
-                        ? AppColors.accentAnalytics
-                        : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -216,421 +214,119 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildKpiMetrics(List<SensorReading> readings) {
-    if (readings.isEmpty) {
-      return AppCard(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          children: [
-            Icon(Icons.bar_chart_rounded,
-                size: 40, color: AppColors.textMuted.withOpacity(0.5)),
-            const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'No Historical Data in Range',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Connect to the ESP32 to gather environmental telemetry samples.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
+  Widget _buildMetricSelector() {
+    return Row(
+      children: SelectedMetric.values.map((metric) {
+        final isSelected = _selectedMetric == metric;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: ChoiceChip(
+              label: Text(
+                metric.name.toUpperCase(),
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textSecondary),
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+              selected: isSelected,
+              selectedColor: metric.color,
+              backgroundColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                side: BorderSide(color: isSelected ? metric.color : AppColors.border),
+              ),
+              onSelected: (_) => setState(() => _selectedMetric = metric),
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        );
+      }).toList(),
+    );
+  }
 
+  Widget _buildKpiMetrics(List<SensorReading> readings) {
     double? minTemp, maxTemp, sumTemp = 0;
     int countTemp = 0;
     double? minHum, maxHum, sumHum = 0;
     int countHum = 0;
+    int? minGas, maxGas, sumGas = 0;
+    int countGas = 0;
 
     for (final r in readings) {
       if (r.temperature != null) {
-        minTemp = (minTemp == null)
-            ? r.temperature!
-            : (r.temperature! < minTemp ? r.temperature! : minTemp);
-        maxTemp = (maxTemp == null)
-            ? r.temperature!
-            : (r.temperature! > maxTemp ? r.temperature! : maxTemp);
+        minTemp = (minTemp == null) ? r.temperature! : (r.temperature! < minTemp ? r.temperature! : minTemp);
+        maxTemp = (maxTemp == null) ? r.temperature! : (r.temperature! > maxTemp ? r.temperature! : maxTemp);
         sumTemp = sumTemp! + r.temperature!;
         countTemp++;
       }
       if (r.humidity != null) {
-        minHum = (minHum == null)
-            ? r.humidity!
-            : (r.humidity! < minHum ? r.humidity! : minHum);
-        maxHum = (maxHum == null)
-            ? r.humidity!
-            : (r.humidity! > maxHum ? r.humidity! : maxHum);
+        minHum = (minHum == null) ? r.humidity! : (r.humidity! < minHum ? r.humidity! : minHum);
+        maxHum = (maxHum == null) ? r.humidity! : (r.humidity! > maxHum ? r.humidity! : maxHum);
         sumHum = sumHum! + r.humidity!;
         countHum++;
       }
+      if (r.gasRawAdc != null) {
+        minGas = (minGas == null) ? r.gasRawAdc! : (r.gasRawAdc! < minGas ? r.gasRawAdc! : minGas);
+        maxGas = (maxGas == null) ? r.gasRawAdc! : (r.gasRawAdc! > maxGas ? r.gasRawAdc! : maxGas);
+        sumGas = sumGas! + r.gasRawAdc!;
+        countGas++;
+      }
     }
 
-    final avgTemp =
-        countTemp > 0 ? (sumTemp! / countTemp).toStringAsFixed(1) : '—';
+    final avgTemp = countTemp > 0 ? (sumTemp! / countTemp).toStringAsFixed(1) : '—';
     final avgHum = countHum > 0 ? (sumHum! / countHum).toStringAsFixed(1) : '—';
-
-    // Data availability % (estimated vs expected samples at 2s interval)
-    final firstTime = readings.first.timestamp;
-    final lastTime = readings.last.timestamp;
-    final durationSeconds = lastTime.difference(firstTime).inSeconds.abs();
-    final expectedSamples =
-        durationSeconds > 0 ? (durationSeconds / 2.0).ceil() : readings.length;
-    final availability = expectedSamples > 0
-        ? ((readings.length / expectedSamples) * 100)
-            .clamp(0.0, 100.0)
-            .toStringAsFixed(0)
-        : '100';
+    final avgGas = countGas > 0 ? (sumGas! ~/ countGas).toString() : '—';
 
     return Column(
       children: [
-        // Temperature summary
-        AppCard(
-          padding: const EdgeInsets.all(AppSpacing.base),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.accentTemperatureLight,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: const Icon(Icons.thermostat_rounded,
-                        size: 16, color: AppColors.accentTemperature),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Text(
-                    'TEMPERATURE SUMMARY',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatTile(
-                      'MIN', '${minTemp?.toStringAsFixed(1) ?? "—"}°C'),
-                  _buildStatTile('MEAN', '$avgTemp°C', isPrimary: true),
-                  _buildStatTile(
-                      'MAX', '${maxTemp?.toStringAsFixed(1) ?? "—"}°C'),
-                ],
-              ),
-            ],
-          ),
+        // Temperature Summary Card
+        _buildStatCard(
+          title: 'TEMPERATURE SUMMARY',
+          icon: Icons.thermostat_rounded,
+          color: AppColors.accentTemperature,
+          minStr: minTemp != null ? '${minTemp.toStringAsFixed(1)}°C' : '—',
+          meanStr: '$avgTemp°C',
+          maxStr: maxTemp != null ? '${maxTemp.toStringAsFixed(1)}°C' : '—',
         ),
-        const SizedBox(height: AppSpacing.md),
-        // Humidity summary
-        AppCard(
-          padding: const EdgeInsets.all(AppSpacing.base),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.accentHumidityLight,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: const Icon(Icons.water_drop_rounded,
-                        size: 16, color: AppColors.accentHumidity),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  const Text(
-                    'HUMIDITY SUMMARY',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatTile(
-                      'MIN', '${minHum?.toStringAsFixed(1) ?? "—"}%'),
-                  _buildStatTile('MEAN', '$avgHum%', isPrimary: true),
-                  _buildStatTile(
-                      'MAX', '${maxHum?.toStringAsFixed(1) ?? "—"}%'),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        // Dataset reliability stats
-        Row(
-          children: [
-            Expanded(
-              child: AppCard(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('TOTAL SAMPLES', style: _metricLabelStyle),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${readings.length}',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppCard(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('DATA AVAILABILITY', style: _metricLabelStyle),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$availability%',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.accentSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        // Alert Count & Monitoring Duration stats
-        Row(
-          children: [
-            Expanded(
-              child: AppCard(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('ALERT COUNT', style: _metricLabelStyle),
-                    const SizedBox(height: 4),
-                    Consumer<ThresholdService>(
-                      builder: (_, thresh, __) {
-                        final alertCount = readings.where((r) {
-                          final t = r.temperature ?? 0;
-                          final h = r.humidity ?? 0;
-                          return t >= thresh.temperatureThreshold || h >= thresh.humidityThreshold;
-                        }).length;
+        const SizedBox(height: AppSpacing.sm),
 
-                        return Text(
-                          '$alertCount',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: alertCount > 0 ? AppColors.critical : AppColors.normal,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppCard(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('MONITORING SPAN', style: _metricLabelStyle),
-                    const SizedBox(height: 4),
-                    Text(
-                      readings.length >= 2
-                          ? AppUtils.formatDuration(readings.last.timestamp.difference(readings.first.timestamp))
-                          : '—',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        // Humidity Summary Card
+        _buildStatCard(
+          title: 'HUMIDITY SUMMARY',
+          icon: Icons.water_drop_rounded,
+          color: AppColors.accentHumidity,
+          minStr: minHum != null ? '${minHum.toStringAsFixed(1)}%' : '—',
+          meanStr: '$avgHum%',
+          maxStr: maxHum != null ? '${maxHum.toStringAsFixed(1)}%' : '—',
+        ),
+        const SizedBox(height: AppSpacing.sm),
+
+        // MQ-2 Gas Raw ADC Summary Card
+        _buildStatCard(
+          title: 'MQ-2 GAS RAW ADC SUMMARY',
+          icon: Icons.cloud_outlined,
+          color: AppColors.accentGas,
+          minStr: minGas != null ? '$minGas ADC' : '—',
+          meanStr: '$avgGas ADC',
+          maxStr: maxGas != null ? '$maxGas ADC' : '—',
+          footnote: 'Raw uncalibrated 12-bit ADC counts (0–4095)',
         ),
       ],
     );
   }
 
-  Widget _buildTrendAnalysis(List<SensorReading> readings) {
-    if (readings.length < 5) return const SizedBox.shrink();
-
-    // Simple linear regression slope calculation
-    // Slope = (N*sum(xy) - sum(x)*sum(y)) / (N*sum(x^2) - (sum(x))^2)
-    final n = readings.length;
-    double sumX = 0, sumYTemp = 0, sumYHum = 0;
-    double sumXYTemp = 0, sumXYHum = 0;
-    double sumX2 = 0;
-
-    for (int i = 0; i < n; i++) {
-      final x = i.toDouble();
-      final temp = readings[i].temperature ?? 0;
-      final hum = readings[i].humidity ?? 0;
-
-      sumX += x;
-      sumX2 += x * x;
-      sumYTemp += temp;
-      sumYHum += hum;
-      sumXYTemp += x * temp;
-      sumXYHum += x * hum;
-    }
-
-    final denom = (n * sumX2 - sumX * sumX);
-    final slopeTemp =
-        denom != 0 ? (n * sumXYTemp - sumX * sumYTemp) / denom : 0.0;
-    final slopeHum = denom != 0 ? (n * sumXYHum - sumX * sumYHum) / denom : 0.0;
-
-    final tempTrendText = slopeTemp.abs() < 0.01
-        ? 'Stable thermal equilibrium'
-        : (slopeTemp > 0
-            ? 'Warming trend (+${(slopeTemp * 60).toStringAsFixed(2)}°C/min)'
-            : 'Cooling trend (${(slopeTemp * 60).toStringAsFixed(2)}°C/min)');
-
-    final humTrendText = slopeHum.abs() < 0.02
-        ? 'Steady relative humidity'
-        : (slopeHum > 0
-            ? 'Humidifying trend (+${(slopeHum * 60).toStringAsFixed(2)}%/min)'
-            : 'Dehumidifying trend (${(slopeHum * 60).toStringAsFixed(2)}%/min)');
-
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.accentAnalyticsLight,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: const Icon(Icons.trending_up_rounded,
-                    size: 16, color: AppColors.accentAnalytics),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              const Text(
-                'REGRESSION & TREND ANALYSIS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _buildTrendRow(
-            label: 'Thermal Trajectory',
-            desc: tempTrendText,
-            color: AppColors.accentTemperature,
-            icon: slopeTemp > 0
-                ? Icons.north_east_rounded
-                : (slopeTemp < 0
-                    ? Icons.south_east_rounded
-                    : Icons.east_rounded),
-          ),
-          const Divider(height: 16, color: AppColors.borderSubtle),
-          _buildTrendRow(
-            label: 'Moisture Trajectory',
-            desc: humTrendText,
-            color: AppColors.accentHumidity,
-            icon: slopeHum > 0
-                ? Icons.north_east_rounded
-                : (slopeHum < 0
-                    ? Icons.south_east_rounded
-                    : Icons.east_rounded),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTrendRow({
-    required String label,
-    required String desc,
-    required Color color,
+  Widget _buildStatCard({
+    required String title,
     required IconData icon,
+    required Color color,
+    required String minStr,
+    required String meanStr,
+    required String maxStr,
+    String? footnote,
   }) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                desc,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.textSecondary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSmartInsights(MonitoringProvider provider) {
-    final insights = provider.smartInsights;
-
     return AppCard(
-      borderColor: AppColors.accentAnalytics.withOpacity(0.3),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -640,86 +336,225 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.accentAnalyticsLight,
+                  color: color.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: const Icon(Icons.psychology_rounded,
-                    size: 16, color: AppColors.accentAnalytics),
+                child: Icon(icon, size: 16, color: color),
               ),
               const SizedBox(width: AppSpacing.sm),
-              const Text(
-                'SYSTEM TELEMETRY INSIGHTS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    letterSpacing: 0.4,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          ...insights.map(
-            (item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 5),
-                    child: Icon(Icons.circle,
-                        size: 5, color: AppColors.accentAnalytics),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatTile('MINIMUM', minStr),
+              _buildStatTile('AVERAGE', meanStr, isHighlight: true, color: color),
+              _buildStatTile('MAXIMUM', maxStr),
+            ],
           ),
+          if (footnote != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            const Divider(height: 12, color: AppColors.borderSubtle),
+            Text(
+              footnote,
+              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildStatTile(String label, String value, {bool isPrimary = false}) {
+  Widget _buildStatTile(String label, String value, {bool isHighlight = false, Color? color}) {
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w600,
-            color: isPrimary ? AppColors.accentAnalytics : AppColors.textMuted,
-            letterSpacing: 0.5,
+            color: AppColors.textSecondary,
+            letterSpacing: 0.3,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           style: TextStyle(
-            fontSize: isPrimary ? 18 : 15,
-            fontWeight: FontWeight.w600,
-            color:
-                isPrimary ? AppColors.accentAnalytics : AppColors.textPrimary,
+            fontSize: isHighlight ? 16 : 14,
+            fontWeight: FontWeight.w700,
+            color: isHighlight ? (color ?? AppColors.primary) : AppColors.textPrimary,
           ),
         ),
       ],
     );
   }
 
-  static const _metricLabelStyle = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textSecondary,
-    letterSpacing: 0.5,
-  );
+  Widget _buildChartCard(List<SensorReading> readings) {
+    final spots = <FlSpot>[];
+    for (int i = 0; i < readings.length; i++) {
+      final r = readings[i];
+      double? val;
+      if (_selectedMetric == SelectedMetric.temperature) val = r.temperature;
+      if (_selectedMetric == SelectedMetric.humidity) val = r.humidity;
+      if (_selectedMetric == SelectedMetric.gas) val = r.gasRawAdc?.toDouble();
+
+      if (val != null) {
+        spots.add(FlSpot(i.toDouble(), val));
+      }
+    }
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.base),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${_selectedMetric.title.toUpperCase()} TREND',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _selectedMetric.color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                ),
+                child: Text(
+                  '${spots.length} DATA POINTS',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: _selectedMetric.color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          if (spots.length < 2)
+            Container(
+              height: 180,
+              alignment: Alignment.center,
+              child: const Text(
+                'Insufficient data points to render trend line',
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
+            )
+          else
+            SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (value) => const FlLine(
+                      color: AppColors.borderSubtle,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  titlesData: const FlTitlesData(
+                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 36,
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: spots,
+                      isCurved: true,
+                      color: _selectedMetric.color,
+                      barWidth: 2.5,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: _selectedMetric.color.withOpacity(0.12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataQualityCard(List<SensorReading> readings) {
+    final firstTime = readings.first.timestamp;
+    final lastTime = readings.last.timestamp;
+    final durationSeconds = lastTime.difference(firstTime).inSeconds.abs();
+    final expectedSamples = durationSeconds > 0 ? (durationSeconds / 2.0).ceil() : readings.length;
+    final availability = expectedSamples > 0
+        ? ((readings.length / expectedSamples) * 100).clamp(0.0, 100.0).toStringAsFixed(0)
+        : '100';
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Column(
+            children: [
+              const Text('TOTAL READINGS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+              const SizedBox(height: 2),
+              Text(
+                '${readings.length}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24, child: VerticalDivider(color: AppColors.border)),
+          Column(
+            children: [
+              const Text('DATA AVAILABILITY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+              const SizedBox(height: 2),
+              Text(
+                '$availability%',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.success),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24, child: VerticalDivider(color: AppColors.border)),
+          Column(
+            children: [
+              const Text('RANGE DURATION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+              const SizedBox(height: 2),
+              Text(
+                _selectedRange.label,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.secondary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,9 @@
-// AQM AETHER — Main Shell with 6-Section Modern Industrial Navigation
-// 1. Dashboard  2. Devices  3. Environment  4. Motion  5. Alerts  6. Settings
+// AQM AETHER — Main Shell with 5-Section Industrial IoT Architecture
+// 1. Dashboard (Command Center)
+// 2. Devices (BLE Device Discovery & Link)
+// 3. Analytics (Historical Trends & Aggregation)
+// 4. History (Tabular Telemetry Logs & CSV Export)
+// 5. Settings (Hardware Configuration & System Controls)
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,9 +12,8 @@ import '../core/theme/app_theme.dart';
 import '../services/notifications/notification_service.dart';
 import 'overview/overview_screen.dart';
 import 'devices/devices_screen.dart';
-import 'environment/environment_screen.dart';
-import 'motion/motion_screen.dart';
-import 'alerts/alerts_screen.dart';
+import 'analytics/analytics_screen.dart';
+import 'history/history_screen.dart';
 import 'settings/settings_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -36,19 +39,14 @@ class _MainShellState extends State<MainShell> {
       label: 'DEVICES',
     ),
     _NavDestination(
-      icon: Icons.eco_outlined,
-      activeIcon: Icons.eco_rounded,
-      label: 'ENVIRONMENT',
+      icon: Icons.insights_rounded,
+      activeIcon: Icons.insights_rounded,
+      label: 'ANALYTICS',
     ),
     _NavDestination(
-      icon: Icons.screen_rotation_outlined,
-      activeIcon: Icons.screen_rotation_rounded,
-      label: 'MOTION',
-    ),
-    _NavDestination(
-      icon: Icons.notifications_none_rounded,
-      activeIcon: Icons.notifications_active_rounded,
-      label: 'ALERTS',
+      icon: Icons.history_rounded,
+      activeIcon: Icons.manage_history_rounded,
+      label: 'HISTORY',
     ),
     _NavDestination(
       icon: Icons.tune_outlined,
@@ -76,14 +74,12 @@ class _MainShellState extends State<MainShell> {
     if (payload == null) return;
     NotificationService().navigationPayloadNotifier.value = null;
 
-    if (payload == 'nav:alerts') {
-      _onNavTap(4);
-    } else if (payload == 'nav:settings') {
-      _onNavTap(5);
-    } else if (payload == 'nav:live' || payload == 'nav:environment') {
-      _onNavTap(2);
-    } else if (payload == 'nav:motion') {
+    if (payload == 'nav:alerts' || payload == 'nav:history') {
       _onNavTap(3);
+    } else if (payload == 'nav:settings') {
+      _onNavTap(4);
+    } else if (payload == 'nav:analytics' || payload == 'nav:live' || payload == 'nav:environment') {
+      _onNavTap(2);
     } else if (payload == 'nav:devices') {
       _onNavTap(1);
     } else if (payload == 'nav:overview' || payload == 'nav:dashboard') {
@@ -104,21 +100,24 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF0B131D) : const Color(0xFFF4F7FA);
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: bgColor,
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
           OverviewScreen(
-            onNavigateToLive: () => _onNavTap(2),
-            onNavigateToSettings: () => _onNavTap(5),
-            onNavigateToAlerts: () => _onNavTap(4),
+            onNavigateToAnalytics: () => _onNavTap(2),
+            onNavigateToHistory: () => _onNavTap(3),
+            onNavigateToSettings: () => _onNavTap(4),
+            onNavigateToAlerts: () => _onNavTap(3),
           ),
           const DevicesScreen(),
-          const EnvironmentScreen(),
-          const MotionScreen(),
-          const AlertsScreen(),
+          const AnalyticsScreen(),
+          const HistoryScreen(),
           const SettingsScreen(),
         ],
       ),
@@ -146,16 +145,20 @@ class _AqmBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? const Color(0xFF131F2E) : Colors.white;
+    final borderColor = isDark ? const Color(0xFF22354B) : const Color(0xFFE5EAF0);
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: navBg,
         border: Border(
-          top: BorderSide(color: AppColors.border, width: 1),
+          top: BorderSide(color: borderColor, width: 1),
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x08000000),
-            offset: Offset(0, -3),
+            color: isDark ? const Color(0x33000000) : const Color(0x08000000),
+            offset: const Offset(0, -3),
             blurRadius: 8,
           ),
         ],
@@ -163,13 +166,14 @@ class _AqmBottomNavBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 62,
+          height: 64,
           child: Row(
             children: List.generate(destinations.length, (i) {
               return Expanded(
                 child: _NavItem(
                   destination: destinations[i],
                   isSelected: currentIndex == i,
+                  isDark: isDark,
                   onTap: () => onTap(i),
                 ),
               );
@@ -184,18 +188,23 @@ class _AqmBottomNavBar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final _NavDestination destination;
   final bool isSelected;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.destination,
     required this.isSelected,
+    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = AppColors.navyPrimary;
-    const inactiveColor = AppColors.textSecondary;
+    final activeColor = isDark ? const Color(0xFF60A5FA) : const Color(0xFF173B57);
+    final inactiveColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF667085);
+    final pillBg = isDark
+        ? (isSelected ? const Color(0xFF1E3A5F) : Colors.transparent)
+        : (isSelected ? const Color(0xFFEDF4FB) : Colors.transparent);
 
     return GestureDetector(
       onTap: onTap,
@@ -207,12 +216,12 @@ class _NavItem extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.navyLight : Colors.transparent,
+              color: pillBg,
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Icon(
               isSelected ? destination.activeIcon : destination.icon,
-              color: isSelected ? AppColors.navyPrimary : inactiveColor,
+              color: isSelected ? activeColor : inactiveColor,
               size: 20,
             ),
           ),
@@ -223,7 +232,7 @@ class _NavItem extends StatelessWidget {
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               color: isSelected ? activeColor : inactiveColor,
-              letterSpacing: 0.2,
+              letterSpacing: 0.3,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

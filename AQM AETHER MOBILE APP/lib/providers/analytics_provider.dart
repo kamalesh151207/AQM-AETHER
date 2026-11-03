@@ -1,5 +1,5 @@
 // AQM AETHER — Analytics Provider
-// Computes statistics and trends from actual sensor readings
+// Computes real statistical KPI metrics (Min, Max, Avg, Trend) for Temp, Humidity, and Gas ADC
 
 import 'package:flutter/foundation.dart';
 import '../models/sensor_reading.dart';
@@ -45,6 +45,7 @@ class AnalyticsProvider extends ChangeNotifier {
 
   SensorStats? _temperatureStats;
   SensorStats? _humidityStats;
+  SensorStats? _gasStats;
 
   AnalyticsProvider(this._monitoring) {
     _compute();
@@ -57,6 +58,7 @@ class AnalyticsProvider extends ChangeNotifier {
 
   SensorStats? get temperatureStats => _temperatureStats;
   SensorStats? get humidityStats => _humidityStats;
+  SensorStats? get gasStats => _gasStats;
 
   List<SensorReading> get allReadings => _monitoring.readings;
 
@@ -72,13 +74,14 @@ class AnalyticsProvider extends ChangeNotifier {
     if (readings.isEmpty) {
       _temperatureStats = null;
       _humidityStats = null;
+      _gasStats = null;
       notifyListeners();
       return;
     }
 
     final totalCount = readings.length;
 
-    // Temperature
+    // 1. Temperature Statistics
     final tempReadings = readings
         .where((r) => r.temperature != null)
         .map((r) => r.temperature!)
@@ -97,7 +100,7 @@ class AnalyticsProvider extends ChangeNotifier {
       _temperatureStats = null;
     }
 
-    // Humidity
+    // 2. Humidity Statistics
     final humReadings = readings
         .where((r) => r.humidity != null)
         .map((r) => r.humidity!)
@@ -116,7 +119,38 @@ class AnalyticsProvider extends ChangeNotifier {
       _humidityStats = null;
     }
 
+    // 3. MQ-2 / MQ-135 Gas RAW ADC Statistics
+    final gasReadings = readings
+        .where((r) => r.gasRawAdc != null)
+        .map((r) => r.gasRawAdc!.toDouble())
+        .toList();
+
+    if (gasReadings.isNotEmpty) {
+      _gasStats = SensorStats(
+        min: gasReadings.reduce((a, b) => a < b ? a : b),
+        max: gasReadings.reduce((a, b) => a > b ? a : b),
+        average: gasReadings.reduce((a, b) => a + b) / gasReadings.length,
+        count: gasReadings.length,
+        availabilityPercent: (gasReadings.length / totalCount) * 100,
+        trend: _computeTrend(gasReadings),
+      );
+    } else {
+      _gasStats = null;
+    }
+
     notifyListeners();
+  }
+
+  SensorStats? computeStatsForValues(List<double> values, int totalCount) {
+    if (values.isEmpty) return null;
+    return SensorStats(
+      min: values.reduce((a, b) => a < b ? a : b),
+      max: values.reduce((a, b) => a > b ? a : b),
+      average: values.reduce((a, b) => a + b) / values.length,
+      count: values.length,
+      availabilityPercent: (values.length / totalCount) * 100,
+      trend: _computeTrend(values),
+    );
   }
 
   TrendDirection _computeTrend(List<double> values) {
@@ -135,11 +169,13 @@ class AnalyticsProvider extends ChangeNotifier {
       sumX2 += i * i;
     }
 
-    final slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    final denominator = (n * sumX2 - sumX * sumX);
+    if (denominator == 0) return TrendDirection.stable;
+
+    final slope = (n * sumXY - sumX * sumY) / denominator;
     final range = (recent.reduce((a, b) => a > b ? a : b) -
         recent.reduce((a, b) => a < b ? a : b));
 
-    // Relative threshold: 10% of range per step
     final threshold = range > 0 ? range * 0.005 : 0.05;
 
     if (slope > threshold) return TrendDirection.increasing;
@@ -151,4 +187,3 @@ class AnalyticsProvider extends ChangeNotifier {
     _compute();
   }
 }
-
