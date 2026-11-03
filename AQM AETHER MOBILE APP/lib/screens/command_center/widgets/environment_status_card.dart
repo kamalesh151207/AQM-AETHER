@@ -144,7 +144,6 @@ class EnvironmentStatusCard extends StatelessWidget {
                     Text(
                       label.toUpperCase(),
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: color,
@@ -191,7 +190,6 @@ class EnvironmentStatusCard extends StatelessWidget {
                       Text(
                         'ESP32: ${alertStatus!.toUpperCase()}',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
                           color: alertStatus?.toUpperCase() == 'ALERT'
@@ -228,7 +226,6 @@ class EnvironmentStatusCard extends StatelessWidget {
           Text(
             description,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 13,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
@@ -260,7 +257,6 @@ class EnvironmentStatusCard extends StatelessWidget {
                     'Prototype indicator — not a certified assessment. '
                     '${AppConstants.appName} uses simulated sensor values for BLE demonstration.',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 10,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textMuted,

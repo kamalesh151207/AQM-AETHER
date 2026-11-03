@@ -63,9 +63,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 const Text(
                   'BLE DEVICE LAB',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     letterSpacing: 0.5,
                   ),
@@ -162,11 +161,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
 
               const SizedBox(height: AppSpacing.md),
 
-              // 6. Educational Note on BLE Advertising
-              _buildBleAdvertisingNoticeCard(),
-              const SizedBox(height: AppSpacing.lg),
-
-              // 7. Section: Safe GATT Explorer View (when connected)
+              // 6. Section: Safe GATT Explorer View (when connected)
               if (isConnected && currentDev.discoveredServices.isNotEmpty)
                 _buildGattExplorerCard(context, currentDev),
 
@@ -196,7 +191,6 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
             child: Text(
               'Bluetooth is turned OFF. Enable Bluetooth to discover and connect to ESP32.',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: AppColors.critical,
@@ -216,7 +210,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
             ),
             child: const Text(
               'ENABLE',
-              style: TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -260,7 +254,6 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 child: Text(
                   dev.status.userMessage,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -277,9 +270,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   child: Text(
                     dev.isGenericDevice ? 'GENERIC GATT' : 'AQM LINK',
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 10,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.normal,
                     ),
                   ),
@@ -291,7 +283,6 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
             Text(
               dev.errorMessage!,
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 11,
                 color: AppColors.critical,
                 fontWeight: FontWeight.w500,
@@ -308,7 +299,6 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   child: Text(
                     'Connected to: ${dev.name} [${dev.id ?? "--"}]',
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -328,9 +318,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   child: const Text(
                     'DISCONNECT',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -345,7 +334,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 icon: const Icon(Icons.refresh_rounded, size: 14),
                 label: const Text(
                   'RECONNECT',
-                  style: TextStyle(fontFamily: 'Manrope', fontSize: 11, fontWeight: FontWeight.w800),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 style: TextButton.styleFrom(foregroundColor: AppColors.accentPrimary),
               ),
@@ -383,9 +372,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 label: Text(
                   isScanning ? 'STOP SCAN' : 'SCAN DEVICES',
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -412,9 +400,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
               label: const Text(
                 'REFRESH',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               style: OutlinedButton.styleFrom(
@@ -451,11 +438,10 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
           child: TextField(
             controller: _searchController,
             onChanged: (val) => provider.searchQuery = val,
-            style: const TextStyle(fontFamily: 'Manrope', fontSize: 12),
+            style: const TextStyle(fontSize: 12),
             decoration: InputDecoration(
               hintText: 'Filter by device name or MAC address…',
               hintStyle: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 11.5,
                 color: AppColors.textMuted,
               ),
@@ -500,9 +486,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: isTarget ? AppColors.textPrimary : AppColors.textMuted,
               letterSpacing: 0.8,
             ),
@@ -519,9 +504,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
             child: Text(
               '$count',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: isTarget ? AppColors.accentPrimary : AppColors.textMuted,
               ),
             ),
@@ -579,9 +563,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       Text(
                         devName,
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                         ),
                         maxLines: 1,
@@ -616,7 +599,6 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   child: Text(
                     isAqm ? 'AQM PROTOCOL VERIFIED' : 'GENERIC BLE PERIPHERAL',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       color: isAqm ? AppColors.accentPrimary : AppColors.textSecondary,
@@ -642,9 +624,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                     child: const Text(
                       'DISCONNECT',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   )
@@ -658,7 +639,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                     ),
                     label: const Text(
                       'CONNECTING…',
-                      style: TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.w800),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -684,9 +665,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                     child: Text(
                       isAqm ? 'CONNECT' : 'EXPLORE',
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 11,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -745,37 +725,6 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
     );
   }
 
-  // ── Educational Note on BLE Advertising ────────────────────────────────────
-
-  Widget _buildBleAdvertisingNoticeCard() {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundSecondary,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline_rounded, size: 18, color: AppColors.textMuted),
-          SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              'Bluetooth Low Energy Note: Discovered peripherals are limited to devices actively transmitting 2.4GHz BLE advertising beacons. Idle devices in deep sleep or peripherals paired via Bluetooth Classic will not appear until they start advertising.',
-              style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 10.5,
-                color: AppColors.textSecondary,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Empty State Placeholder ────────────────────────────────────────────────
 
   Widget _buildEmptyPlaceholder({
@@ -798,9 +747,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
           Text(
             title,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
           ),
@@ -808,8 +756,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
           Text(
             subtitle,
             style: const TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 10,
+              fontSize: 11,
               color: AppColors.textMuted,
             ),
             textAlign: TextAlign.center,
@@ -822,14 +769,13 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
               label: const Text(
                 'SCAN AGAIN',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.accentPrimary,
-                side: const BorderSide(color: AppColors.accentPrimary),
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
@@ -842,60 +788,45 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
     );
   }
 
-  // ── GATT Explorer Tree View ────────────────────────────────────────────────
+  // ── GATT Explorer Tree View (Expandable) ───────────────────────────────────
 
   Widget _buildGattExplorerCard(BuildContext context, DeviceModel dev) {
     return AppCard(
       color: AppColors.backgroundSecondary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.account_tree_rounded,
-                  color: AppColors.accentPrimary, size: 18),
-              const SizedBox(width: AppSpacing.xs),
-              const Text(
-                'DISCOVERED GATT ARCHITECTURE',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.accentPrimary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: const Text(
-                  'SAFE READ-ONLY',
-                  style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.accentPrimary,
-                  ),
-                ),
-              ),
-            ],
+      padding: EdgeInsets.zero,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.base, vertical: 4),
+          leading: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.navyLight,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+            ),
+            child: const Icon(Icons.account_tree_rounded, color: AppColors.navyPrimary, size: 18),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            'Peripheral: ${dev.name} • Services: ${dev.discoveredServices.length}',
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 11,
-              color: AppColors.textSecondary,
+          title: const Text(
+            'GATT DIAGNOSTICS EXPLORER',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              letterSpacing: 0.3,
             ),
           ),
-          const Divider(height: 16, color: AppColors.borderSubtle),
-          ...dev.discoveredServices.map((service) => _buildServiceTile(service)),
-        ],
+          subtitle: Text(
+            '${dev.name} • ${dev.discoveredServices.length} Services Discovered',
+            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+          childrenPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.base, vertical: AppSpacing.sm),
+          children: [
+            const Divider(height: 1, color: AppColors.borderSubtle),
+            const SizedBox(height: AppSpacing.sm),
+            ...dev.discoveredServices.map((service) => _buildServiceTile(service)),
+          ],
+        ),
       ),
     );
   }
@@ -999,9 +930,8 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
       child: Text(
         label,
         style: TextStyle(
-          fontFamily: 'Manrope',
           fontSize: 8,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: color,
         ),
       ),

@@ -185,7 +185,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
               Text(
                 'Device Lab',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -196,7 +195,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
               Text(
                 'BLE Configuration Console & GATT Management',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textMuted,
@@ -263,7 +261,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
           Text(
             status.label.toUpperCase(),
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: color,
@@ -306,7 +303,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                     child: const Text(
                       'SCANNING',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         color: AppColors.accentSecondary,
@@ -360,7 +356,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                         Text(
                           isScanning ? 'STOP SCAN' : 'SCAN PERIPHERALS',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: isScanning
@@ -406,7 +401,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                         Text(
                           'FAST CONNECT',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.accentSecondary,
@@ -497,7 +491,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                                         ? result.device.platformName
                                         : 'Unnamed Device',
                                     style: TextStyle(
-                                      fontFamily: 'Manrope',
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
                                       color: isAqm
@@ -535,7 +528,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                           Text(
                             '${result.rssi} dBm',
                             style: TextStyle(
-                              fontFamily: 'Manrope',
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: result.rssi > -70
@@ -587,7 +579,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                                   : Text(
                                       isCurrent ? 'CONNECTED' : 'CONNECT',
                                       style: TextStyle(
-                                        fontFamily: 'Manrope',
                                         fontSize: 9,
                                         fontWeight: FontWeight.w700,
                                         color: isCurrent
@@ -696,7 +687,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                 child: Text(
                   name,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: isPrimary ? AppColors.textPrimary : accent,
@@ -719,7 +709,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                   Text(
                     found ? 'DISCOVERED' : 'NOT FOUND',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       color: found ? AppColors.success : AppColors.textMuted,
@@ -747,7 +736,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
               Text(
                 'PROPERTIES: $properties',
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textMuted,
@@ -808,7 +796,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                   child: Text(
                     'ACTIVE: ${currentInterval}s',
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: AppColors.accentPrimary,
@@ -822,7 +809,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
           const Text(
             'QUICK PRESETS (SECONDS)',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.textMuted,
@@ -869,7 +855,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                   child: Text(
                     '${preset}s',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: isSelected
@@ -887,7 +872,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
           const Text(
             'CUSTOM INTERVAL (1 - 3600 SECONDS)',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppColors.textMuted,
@@ -910,7 +894,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                   decoration: InputDecoration(
                     hintText: 'Enter interval in seconds',
                     hintStyle: const TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 12,
                       color: AppColors.textMuted,
                     ),
@@ -972,7 +955,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                         : const Text(
                             'APPLY CONFIG',
                             style: TextStyle(
-                              fontFamily: 'Manrope',
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: AppColors.backgroundPrimary,
@@ -998,7 +980,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
                   child: Text(
                     _writeStatusMessage!,
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: _writeSuccess
@@ -1148,7 +1129,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
             title: const Text(
               'Disconnect Peripheral?',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
@@ -1156,7 +1136,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
             content: const Text(
               'Active notifications will be stopped and BLE connection to AQM-Kamalesh terminated.',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 color: AppColors.textSecondary,
               ),
             ),
@@ -1203,7 +1182,6 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
             Text(
               'DISCONNECT AQM-KAMALESH',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: AppColors.critical,

@@ -194,8 +194,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = AppColors.textPrimary;
-    const inactiveColor = AppColors.textMuted;
+    const activeColor = AppColors.navyPrimary;
+    const inactiveColor = AppColors.textSecondary;
 
     return GestureDetector(
       onTap: onTap,
@@ -205,14 +205,14 @@ class _NavItem extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.accentSecondaryLight : Colors.transparent,
+              color: isSelected ? AppColors.navyLight : Colors.transparent,
               borderRadius: BorderRadius.circular(AppRadius.full),
             ),
             child: Icon(
               isSelected ? destination.activeIcon : destination.icon,
-              color: isSelected ? AppColors.accentSecondary : inactiveColor,
+              color: isSelected ? AppColors.navyPrimary : inactiveColor,
               size: 20,
             ),
           ),
@@ -220,11 +220,10 @@ class _NavItem extends StatelessWidget {
           Text(
             destination.label,
             style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 9,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               color: isSelected ? activeColor : inactiveColor,
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

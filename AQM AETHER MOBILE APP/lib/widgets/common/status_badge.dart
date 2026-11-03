@@ -33,11 +33,10 @@ class StatusBadge extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: TextStyle(
-          fontFamily: 'Manrope',
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
-          letterSpacing: 0.5,
+          letterSpacing: 0.3,
         ),
       ),
     );

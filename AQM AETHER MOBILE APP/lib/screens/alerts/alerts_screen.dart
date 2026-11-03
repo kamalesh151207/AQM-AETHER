@@ -48,7 +48,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
         title: const Text(
           'Clear Alert Log History',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -57,7 +56,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
         content: const Text(
           'This will permanently delete all stored threshold violation events and alarm activity logs. This action cannot be undone.',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 13,
             color: AppColors.textSecondary,
             height: 1.5,
@@ -74,7 +72,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
               backgroundColor: AppColors.critical,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -156,11 +154,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   monitoringProvider,
                 ),
 
-                const SizedBox(height: AppSpacing.base),
-
-                // ── Honest Sensor Channel Disclaimers ────────────────────────
-                _buildSensorDisclaimersCard(),
-
                 const SizedBox(height: AppSpacing.xl),
               ],
             );
@@ -186,9 +179,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
               Text(
                 'ALERT CENTER',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: -0.5,
                 ),
@@ -197,7 +189,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
               Text(
                 'Threshold safety management & audio alarms',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -230,7 +221,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
             }
           },
           icon: const Icon(Icons.volume_up_rounded, size: 14, color: AppColors.textPrimary),
-          label: const Text('TEST ALARM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          label: const Text('TEST ALARM', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: AppColors.border),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -291,9 +282,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                               : '${source.label.toUpperCase()} THRESHOLD EXCEEDED')
                           : 'OPTIMAL ENVIRONMENTAL CONDITIONS',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: bannerColor,
                         letterSpacing: 0.4,
                       ),
@@ -306,7 +296,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                               ? (isMuted ? 'Muted temporarily' : (isAck ? 'Acknowledged' : 'Audible alarm active'))
                               : 'All live telemetry values within safe boundaries'),
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 11,
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -351,7 +340,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => thresholdService.acknowledgeAlert(),
                       icon: const Icon(Icons.check_circle_rounded, size: 14),
-                      label: const Text('ACKNOWLEDGE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                      label: const Text('ACKNOWLEDGE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.critical,
                         foregroundColor: Colors.white,
@@ -373,7 +362,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     ),
                     label: Text(
                       isMuted ? 'UNMUTE' : 'MUTE (15m)',
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.critical),
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.critical),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.critical),
@@ -414,9 +403,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
               Text(
                 title.toUpperCase(),
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 10,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   letterSpacing: 0.5,
                 ),
@@ -432,9 +420,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           Text(
             current,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 20,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: isExceeded ? AppColors.critical : AppColors.textPrimary,
             ),
           ),
@@ -442,7 +429,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
           Text(
             threshold,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               color: AppColors.textMuted,
               fontWeight: FontWeight.w600,
@@ -461,9 +447,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           const Text(
             'INTELLIGENT THRESHOLD CRITERIA',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
               letterSpacing: 0.5,
             ),
@@ -471,7 +456,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
           const SizedBox(height: AppSpacing.sm),
           const Text(
             'Incoming readings are continuously checked against configured thresholds. Audible alarms and local notifications trigger immediately upon violation:',
-            style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textSecondary, height: 1.4),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.4),
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
@@ -516,9 +501,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 9,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: color,
               letterSpacing: 0.5,
             ),
@@ -527,9 +511,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
           Text(
             value,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 15,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: color,
             ),
           ),
@@ -560,9 +543,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 ),
               ),
               labelStyle: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600,
                 color: isSelected ? AppColors.accentAnalytics : AppColors.textSecondary,
               ),
             ),
@@ -592,9 +574,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                       child: Text(
                         'CHRONOLOGICAL ALERT AUDIT LOG',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                           letterSpacing: 0.5,
                         ),
@@ -612,9 +593,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                       child: Text(
                         '${items.length} LOGGED',
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 9,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -634,7 +614,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   child: const Text(
                     'Clear Log',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppColors.critical,
@@ -655,7 +634,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   Text(
                     'No Threshold Violations Recorded',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -664,7 +642,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   SizedBox(height: 2),
                   Text(
                     'All environmental telemetry has remained within configured thresholds.',
-                    style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -712,9 +690,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                 child: Text(
                                   '${item.source.label.toUpperCase()} BREACH',
                                   style: TextStyle(
-                                    fontFamily: 'Manrope',
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                     color: accent,
                                   ),
                                   maxLines: 1,
@@ -731,9 +708,8 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                 child: Text(
                                   item.isResolved ? 'CLEARED' : (item.isAcknowledged ? 'ACKNOWLEDGED' : 'ACTIVE'),
                                   style: TextStyle(
-                                    fontFamily: 'Manrope',
                                     fontSize: 8,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w600,
                                     color: item.isResolved ? AppColors.normal : AppColors.critical,
                                   ),
                                 ),
@@ -748,7 +724,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                                     ? 'Temp ${item.measuredTemp.toStringAsFixed(1)}°C exceeded threshold limit of ${item.tempThreshold}°C'
                                     : 'Humidity ${item.measuredHum.toStringAsFixed(1)}% exceeded threshold limit of ${item.humThreshold}%'),
                             style: const TextStyle(
-                              fontFamily: 'Manrope',
                               fontSize: 11,
                               color: AppColors.textSecondary,
                             ),
@@ -759,7 +734,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     Text(
                       AppUtils.formatTime(item.timestamp),
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
                         color: AppColors.textMuted,
                         fontWeight: FontWeight.w500,
@@ -769,44 +743,6 @@ class _AlertsScreenState extends State<AlertsScreen> {
                 );
               },
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSensorDisclaimersCard() {
-    return const AppCard(
-      color: AppColors.backgroundPrimary,
-      borderColor: AppColors.border,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline_rounded, size: 16, color: AppColors.accentSecondary),
-              SizedBox(width: AppSpacing.xs),
-              Text(
-                'SENSOR CHANNEL TRANSPARENCY',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: AppSpacing.sm),
-          Text(
-            'AQM AETHER hardware demonstration features Temperature and Humidity channels. Particulate channels (PM2.5, PM10), CO2, and VOC are simulated or reserved for future hardware revisions.',
-            style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              height: 1.5,
-            ),
-          ),
         ],
       ),
     );

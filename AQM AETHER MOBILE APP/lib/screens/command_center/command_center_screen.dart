@@ -148,7 +148,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               Text(
                 AppConstants.appName,
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
                   color: AppColors.accentPrimary,
@@ -159,7 +158,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               Text(
                 'Environmental Intelligence',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textMuted,
@@ -203,7 +201,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
             Text(
               timeStr,
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -213,7 +210,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
             Text(
               dateStr,
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 11,
                 fontWeight: FontWeight.w400,
                 color: AppColors.textMuted,
@@ -244,7 +240,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                 child: Text(
                   device.name,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -267,7 +262,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                 child: Text(
                   status.label.toUpperCase(),
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: _statusColor(status),
@@ -292,7 +286,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
               child: Text(
                 device.errorMessage!,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   color: AppColors.critical,
                 ),
@@ -387,7 +380,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                                   ? 'RETRY CONNECTION TO AQM-KAMALESH'
                                   : 'CONNECT TO AQM-KAMALESH'),
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
@@ -554,7 +546,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                 Text(
                   'No activity recorded',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textMuted,
@@ -565,7 +556,6 @@ class _CommandCenterScreenState extends State<CommandCenterScreen> {
                   'Events will appear here once the device connects.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     color: AppColors.textMuted,
                   ),
@@ -645,7 +635,6 @@ class _SectionHeader extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: AppColors.accentPrimary,
@@ -745,7 +734,6 @@ class _BleStatusDot extends StatelessWidget {
           Text(
             _label,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: color,
@@ -786,7 +774,6 @@ class _LiveBadge extends StatelessWidget {
           const Text(
             'LIVE',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: AppColors.success,
@@ -824,7 +811,6 @@ class _DeviceDetailRow extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -835,7 +821,6 @@ class _DeviceDetailRow extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: valueColor ?? AppColors.textPrimary,
@@ -923,7 +908,6 @@ class _SensorCard extends StatelessWidget {
                 child: Text(
                   label.toUpperCase(),
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: hasValue ? color.withOpacity(0.8) : AppColors.textMuted,
@@ -943,7 +927,6 @@ class _SensorCard extends StatelessWidget {
                   child: const Text(
                     'SIM',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 8,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textMuted,
@@ -964,7 +947,6 @@ class _SensorCard extends StatelessWidget {
                 child: Text(
                   value,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 38,
                     fontWeight: FontWeight.w800,
                     color: hasValue ? color : AppColors.textMuted,
@@ -979,7 +961,6 @@ class _SensorCard extends StatelessWidget {
                   child: Text(
                     unit,
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: hasValue ? color.withOpacity(0.7) : AppColors.textMuted,
@@ -1003,7 +984,6 @@ class _SensorCard extends StatelessWidget {
             const Text(
               'No Signal',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
                 color: AppColors.textMuted,
               ),
@@ -1014,7 +994,6 @@ class _SensorCard extends StatelessWidget {
                   ? 'Stale · ${AppUtils.formatRelativeTime(lastUpdate!)}'
                   : AppUtils.formatRelativeTime(lastUpdate!),
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
                 color: isStale ? AppColors.warning : AppColors.textMuted,
               ),
@@ -1023,7 +1002,6 @@ class _SensorCard extends StatelessWidget {
             const Text(
               'Awaiting reading…',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
                 color: AppColors.textMuted,
               ),
@@ -1059,7 +1037,6 @@ class _MonitoringRow extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -1070,7 +1047,6 @@ class _MonitoringRow extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: valueColor ?? AppColors.textPrimary,
@@ -1164,7 +1140,6 @@ class _ActivityEventRow extends StatelessWidget {
                   Text(
                     event.type.label.toUpperCase(),
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                       color: color,
@@ -1175,7 +1150,6 @@ class _ActivityEventRow extends StatelessWidget {
                   Text(
                     AppUtils.formatRelativeTime(event.timestamp),
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 10,
                       color: AppColors.textMuted,
                     ),
@@ -1186,7 +1160,6 @@ class _ActivityEventRow extends StatelessWidget {
               Text(
                 event.message,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
@@ -1197,7 +1170,6 @@ class _ActivityEventRow extends StatelessWidget {
                 Text(
                   event.detail!,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     color: AppColors.textSecondary,
                   ),

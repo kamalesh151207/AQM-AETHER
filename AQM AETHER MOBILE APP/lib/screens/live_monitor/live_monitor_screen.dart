@@ -85,7 +85,6 @@ class _LiveMonitorScreenState extends State<LiveMonitorScreen>
                     const Text(
                       'Live Monitor',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -270,7 +269,6 @@ class _ConnectionStatusIndicator extends StatelessWidget {
           Text(
             isConnected ? 'Connected' : 'Disconnected',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isConnected ? AppColors.success : AppColors.critical,
@@ -346,7 +344,6 @@ class _TimeChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: isSelected ? AppColors.accentPrimary : AppColors.textMuted,
@@ -430,7 +427,6 @@ class _SensorSection extends StatelessWidget {
                 Text(
                   title.toUpperCase(),
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
@@ -592,7 +588,6 @@ class _StatCol extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 10,
             fontWeight: FontWeight.w600,
             color: AppColors.textMuted,
@@ -603,7 +598,6 @@ class _StatCol extends StatelessWidget {
         Text(
           value != null ? value!.toStringAsFixed(1) : '—',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: value != null ? AppColors.textPrimary : AppColors.textMuted,

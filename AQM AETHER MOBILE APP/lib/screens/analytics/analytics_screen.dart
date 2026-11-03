@@ -68,7 +68,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       ? 'CSV telemetry exported successfully'
                       : 'No telemetry records to export',
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -145,9 +144,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 'ANALYTICS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 20,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: -0.5,
                 ),
@@ -156,7 +154,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 'Environmental statistics & trends',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -204,9 +201,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 child: Text(
                   range.label,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600,
                     color: isSelected
                         ? AppColors.accentAnalytics
                         : AppColors.textSecondary,
@@ -232,7 +228,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             const Text(
               'No Historical Data in Range',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -243,7 +238,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               'Connect to the ESP32 to gather environmental telemetry samples.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   color: AppColors.textSecondary),
             ),
@@ -320,9 +314,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   const Text(
                     'TEMPERATURE SUMMARY',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
@@ -366,9 +359,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   const Text(
                     'HUMIDITY SUMMARY',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
@@ -404,9 +396,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     Text(
                       '${readings.length}',
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -426,9 +417,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     Text(
                       '$availability%',
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.accentSecondary,
                       ),
                     ),
@@ -461,9 +451,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         return Text(
                           '$alertCount',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 22,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w600,
                             color: alertCount > 0 ? AppColors.critical : AppColors.normal,
                           ),
                         );
@@ -487,9 +476,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           ? AppUtils.formatDuration(readings.last.timestamp.difference(readings.first.timestamp))
                           : '—',
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -563,9 +551,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               const Text(
                 'REGRESSION & TREND ANALYSIS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -616,7 +603,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 label,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -627,7 +613,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 desc,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   color: AppColors.textSecondary,
                 ),
@@ -665,9 +650,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               const Text(
                 'SYSTEM TELEMETRY INSIGHTS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -691,7 +675,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     child: Text(
                       item,
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
                         color: AppColors.textSecondary,
                         height: 1.4,
@@ -713,9 +696,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         Text(
           label,
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 10,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: isPrimary ? AppColors.accentAnalytics : AppColors.textMuted,
             letterSpacing: 0.5,
           ),
@@ -724,9 +706,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         Text(
           value,
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: isPrimary ? 18 : 15,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color:
                 isPrimary ? AppColors.accentAnalytics : AppColors.textPrimary,
           ),
@@ -736,9 +717,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   static const _metricLabelStyle = TextStyle(
-    fontFamily: 'Manrope',
     fontSize: 10,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,
     letterSpacing: 0.5,
   );

@@ -94,12 +94,10 @@ class _LiveIndicatorState extends State<LiveIndicator>
         Text(
           'LIVE',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color:
-                widget.isLive ? AppColors.success : AppColors.textMuted,
-            letterSpacing: 1.0,
+            fontWeight: FontWeight.w600,
+            color: widget.isLive ? AppColors.success : AppColors.textMuted,
+            letterSpacing: 0.8,
           ),
         ),
       ],

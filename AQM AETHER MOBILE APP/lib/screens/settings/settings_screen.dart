@@ -2,7 +2,6 @@
 // Clean Modern Industrial White Interface
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/ble_constants.dart';
@@ -54,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   success
                       ? 'Sampling interval updated to ${_intervalSliderValue}s on ESP32'
                       : 'Failed to write interval to peripheral',
-                  style: const TextStyle(fontFamily: 'Manrope', fontWeight: FontWeight.w600),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -81,7 +80,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text(
           'Clear Recorded History',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
@@ -90,7 +88,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: const Text(
           'This will permanently delete all stored sensor readings and monitoring events from local SQLite storage. This action cannot be undone.',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 13,
             color: AppColors.textSecondary,
             height: 1.5,
@@ -107,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               backgroundColor: AppColors.critical,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -128,17 +125,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
-  }
-
-  void _copyToClipboard(BuildContext context, String text, String label) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$label copied to clipboard'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
@@ -191,12 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 const SizedBox(height: AppSpacing.base),
 
-                // ── Section 7: GATT Architecture Explorer ────────────────────
-                _buildGattExplorerCard(context),
-
-                const SizedBox(height: AppSpacing.base),
-
-                // ── Section 8: Device & Architecture About ───────────────────
+                // ── Section 7: About AQM AETHER ──────────────────────────────
                 _buildAboutCard(),
 
                 const SizedBox(height: AppSpacing.xl),
@@ -215,9 +196,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Text(
           'CONFIGURATION',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 20,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
             letterSpacing: -0.5,
           ),
@@ -226,7 +206,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Text(
           'Threshold limits, audio alarms & device parameters',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 12,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,
@@ -264,9 +243,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'INTELLIGENT THRESHOLD ENGINE',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
@@ -292,7 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 child: const Text(
                   'Reset',
-                  style: TextStyle(fontFamily: 'Manrope', fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentSecondary),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentSecondary),
                 ),
               ),
             ],
@@ -300,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: AppSpacing.sm),
           const Text(
             'Configure safety limits that trigger audible alarms and local notifications upon breach:',
-            style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.base),
 
@@ -353,9 +331,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(
               title,
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: accentColor,
                 letterSpacing: 0.5,
               ),
@@ -380,9 +357,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Text(
                       '${value.toStringAsFixed(1)} $unit',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: accentColor,
                       ),
                     ),
@@ -445,9 +421,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'AUDIBLE ALARM SETTINGS',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
@@ -468,7 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 },
                 icon: const Icon(Icons.play_arrow_rounded, size: 14),
-                label: const Text('TEST', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                label: const Text('TEST', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.critical),
                   foregroundColor: AppColors.critical,
@@ -490,7 +465,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     'Audible Warning Chime',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -498,7 +472,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Text(
                     'Plays dual-tone alert tone when thresholds are breached',
-                    style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -522,7 +496,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     'Alarm Repeat Cooldown',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -530,7 +503,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Text(
                     'Minimum seconds between repeat sound warnings',
-                    style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -562,7 +535,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     'Temporary Mute Duration',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -570,7 +542,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Text(
                     'Duration when user taps Mute on active alarm',
-                    style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -625,9 +597,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Text(
                         'ANDROID SYSTEM NOTIFICATIONS',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
                           letterSpacing: 0.5,
                         ),
@@ -648,7 +619,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                     },
                     icon: const Icon(Icons.send_rounded, size: 12),
-                    label: const Text('TEST NOTIF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                    label: const Text('TEST NOTIF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.accentSecondary),
                       foregroundColor: AppColors.accentSecondary,
@@ -661,7 +632,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: AppSpacing.sm),
               const Text(
                 'Customize notifications across 3 dedicated Android channels (Critical Alerts, Device Status, Monitoring Updates):',
-                style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.md),
 
@@ -731,7 +702,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Text(
                         'Android System Channel Settings',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -746,7 +716,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         minimumSize: const Size(60, 26),
                       ),
-                      child: const Text('CONFIGURE IN ANDROID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800)),
+                      child: const Text('CONFIGURE IN ANDROID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -775,7 +745,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -786,7 +755,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 1),
               Text(
                 subtitle,
-                style: const TextStyle(fontFamily: 'Manrope', fontSize: 10, color: AppColors.textMuted),
+                style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -831,9 +800,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'ESP32 SAMPLING INTERVAL',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 12,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
@@ -849,9 +817,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   'ACTIVE: ${activeInterval}s',
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.accentSecondary,
                   ),
                 ),
@@ -861,7 +828,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: AppSpacing.sm),
           const Text(
             'Adjust how frequently the ESP32 samples and broadcasts sensor telemetry (1s to 3600s):',
-            style: TextStyle(fontFamily: 'Manrope', fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.base),
           // Presets
@@ -884,9 +851,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Text(
                     '${sec}s',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: isPresetSelected ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
@@ -898,7 +864,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Slider
           Row(
             children: [
-              const Text('1s', style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted)),
+              const Text('1s', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
               Expanded(
                 child: Slider(
                   value: _intervalSliderValue.toDouble().clamp(1.0, 60.0),
@@ -911,7 +877,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (val) => setState(() => _intervalSliderValue = val.round()),
                 ),
               ),
-              const Text('60s', style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted)),
+              const Text('60s', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -921,7 +887,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 'Selected: $_intervalSliderValue seconds',
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -943,7 +908,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         height: 14,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('APPLY TO ESP32', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    : const Text('APPLY TO ESP32', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -978,9 +943,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Text(
                 'CONNECTION RELIABILITY & TELEMETRY',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -1013,9 +977,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Text(
               'LIVE DIAGNOSTICS LOG',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
                 letterSpacing: 0.5,
               ),
@@ -1081,9 +1044,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Text(
                 'STORAGE & DATA PERSISTENCE',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -1101,7 +1063,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'Record to Local SQLite',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -1109,7 +1070,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Text(
                     isPaused ? 'Data recording suspended' : 'Storing samples to device storage',
-                    style: const TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted),
+                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -1131,7 +1092,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Text(
                     'Database Storage',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
@@ -1139,14 +1099,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   Text(
                     '$readingCount sample${readingCount == 1 ? "" : "s"} indexed',
-                    style: const TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textMuted),
+                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
               OutlinedButton.icon(
                 onPressed: () => _confirmClearHistory(context),
                 icon: const Icon(Icons.delete_outline, size: 14, color: AppColors.critical),
-                label: const Text('CLEAR ALL', style: TextStyle(fontSize: 10, color: AppColors.critical, fontWeight: FontWeight.w800)),
+                label: const Text('CLEAR ALL', style: TextStyle(fontSize: 10, color: AppColors.critical, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.critical),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1159,182 +1119,93 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── 7. GATT Explorer Card ──────────────────────────────────────────────────
-
-  Widget _buildGattExplorerCard(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.elevatedSurface,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: const Icon(Icons.hub_outlined, size: 16, color: AppColors.textPrimary),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              const Text(
-                'BLE GATT ARCHITECTURE EXPLORER',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Hardware UUID protocol mapping for AQM-Kamalesh:',
-            style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _buildUuidRow(context, 'Primary Service', BleConstants.serviceUuid, 'Custom AQM Primary Service'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'Temperature Char', BleConstants.temperatureUuid, 'Read / Notify (ASCII float)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'Humidity Char', BleConstants.humidityUuid, 'Read / Notify (ASCII float)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'Sampling Interval Char', BleConstants.samplingIntervalUuid, 'Read / Write (ASCII integer)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'Alert Status Char', BleConstants.alertUuid, 'Read / Notify (NORMAL / ALERT)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MQ-135 Gas Char', BleConstants.gasUuid, 'Read / Notify (Raw ADC 0–4095)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MPU6050 Accel X', BleConstants.accelXUuid, 'Notify (g)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MPU6050 Accel Y', BleConstants.accelYUuid, 'Notify (g)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MPU6050 Accel Z', BleConstants.accelZUuid, 'Notify (g)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MPU6050 Gyro X', BleConstants.gyroXUuid, 'Notify (°/s)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MPU6050 Gyro Y', BleConstants.gyroYUuid, 'Notify (°/s)'),
-          const Divider(height: 12, color: AppColors.borderSubtle),
-          _buildUuidRow(context, 'MPU6050 Gyro Z', BleConstants.gyroZUuid, 'Notify (°/s)'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUuidRow(BuildContext context, String name, String uuid, String mode) {
-    return InkWell(
-      onTap: () => _copyToClipboard(context, uuid, name),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontFamily: 'Manrope',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '($mode)',
-                          style: const TextStyle(
-                            fontFamily: 'Manrope',
-                            fontSize: 10,
-                            color: AppColors.textMuted,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    uuid,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.copy_rounded, size: 14, color: AppColors.textMuted),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── 8. About Card ──────────────────────────────────────────────────────────
+  // ── 7. About AQM AETHER ────────────────────────────────────────────────────
 
   Widget _buildAboutCard() {
     return AppCard(
-      color: AppColors.backgroundPrimary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.accentPrimary.withOpacity(0.12),
+                  color: AppColors.navyLight,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: const Icon(Icons.air_rounded, color: AppColors.accentPrimary, size: 18),
+                child: const Icon(Icons.air_rounded, color: AppColors.navyPrimary, size: 20),
               ),
               const SizedBox(width: AppSpacing.sm),
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppConstants.appName,
+                    'AQM AETHER',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
                     ),
                   ),
                   Text(
-                    'Version ${AppConstants.appVersion} • Industrial Environmental Intelligence',
+                    'Smart Air Quality Monitoring System',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
-                      fontSize: 10,
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
           const Text(
-            'Target Peripheral: ESP32 BLE Device "AQM-Kamalesh"\nFeatures intelligent threshold monitoring with automatic audio chimes, local notifications, and exponential backoff recovery.',
+            'AQM AETHER is an IoT environmental monitoring platform interfacing with ESP32 microcontrollers via Bluetooth Low Energy to provide real-time telemetry, threshold alerts, and persistent historical tracking.',
             style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 11,
+              fontSize: 13,
               color: AppColors.textSecondary,
-              height: 1.4,
+              height: 1.45,
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+          const Divider(height: 16, color: AppColors.borderSubtle),
+          const Text(
+            'SENSOR CONFIGURATION',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _buildTelemetryMetricRow('DHT11 / DHT22', 'Temperature & Relative Humidity'),
+          const Divider(height: 12, color: AppColors.borderSubtle),
+          _buildTelemetryMetricRow('MQ-135 / MQ-2', 'Raw 12-bit ADC (0–4095)'),
+          const Divider(height: 12, color: AppColors.borderSubtle),
+          _buildTelemetryMetricRow('MPU6050 Module', '6-Axis Accel (g) & Gyro (°/s)'),
+          const Divider(height: 16, color: AppColors.borderSubtle),
+          const Text(
+            'SYSTEM & BUILD INFORMATION',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _buildTelemetryMetricRow('Application Version', 'v${AppConstants.appVersion} (Production Build)'),
+          const Divider(height: 12, color: AppColors.borderSubtle),
+          _buildTelemetryMetricRow('Target BLE Peripheral', 'AQM-Kamalesh'),
+          const Divider(height: 12, color: AppColors.borderSubtle),
+          _buildTelemetryMetricRow('Data Protocol', 'ASCII Stream over BLE GATT'),
+          const Divider(height: 12, color: AppColors.borderSubtle),
+          _buildTelemetryMetricRow('Local Database', 'SQLite v3 (Offline Capable)'),
         ],
       ),
     );
@@ -1348,7 +1219,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
@@ -1361,7 +1231,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Text(
             value,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.textPrimary,

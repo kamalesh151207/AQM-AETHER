@@ -68,7 +68,6 @@ class _StatColumn extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 10,
             fontWeight: FontWeight.w600,
             color: AppColors.textMuted,
@@ -79,7 +78,6 @@ class _StatColumn extends StatelessWidget {
         Text(
           value != null ? value!.toStringAsFixed(1) : '—',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: value != null ? AppColors.textPrimary : AppColors.textMuted,

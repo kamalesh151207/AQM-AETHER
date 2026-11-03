@@ -58,9 +58,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                   child: Text(
                     'ENVIRONMENT',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: 0.5,
                     ),
@@ -162,9 +161,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
           Text(
             'DATA FEED: ${quality.label}',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: color,
               letterSpacing: 0.5,
             ),
@@ -174,7 +172,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
             Text(
               'Updated: ${AppUtils.formatRelativeTime(provider.lastTempUpdate!)}',
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
                 color: AppColors.textMuted,
               ),
@@ -209,9 +206,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               const Text(
                 'TEMPERATURE',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   letterSpacing: 0.5,
                 ),
@@ -227,9 +223,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               Text(
                 temp != null ? AppUtils.formatTemperature(temp) : '--',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 32,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: displayColor,
                 ),
               ),
@@ -237,7 +232,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               const Text(
                 '°C',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
@@ -249,7 +243,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
           Text(
             'Limit: ${threshold.toStringAsFixed(1)}°C',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: isBreached ? AppColors.critical : AppColors.textMuted,
@@ -285,9 +278,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               const Text(
                 'HUMIDITY',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   letterSpacing: 0.5,
                 ),
@@ -303,9 +295,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               Text(
                 humidity != null ? AppUtils.formatHumidity(humidity) : '--',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 32,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: displayColor,
                 ),
               ),
@@ -313,7 +304,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               const Text(
                 '%',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
@@ -325,7 +315,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
           Text(
             'Limit: ${threshold.toStringAsFixed(1)}%',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w600,
               color: isBreached ? AppColors.critical : AppColors.textMuted,
@@ -379,9 +368,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                     Text(
                       'GAS SENSOR (RAW ADC)',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                         letterSpacing: 0.5,
                       ),
@@ -389,7 +377,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                     Text(
                       'MQ-2 / MQ-135 Sensor • ESP32 ADC1_CH6 (GPIO 34)',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
                         color: AppColors.textMuted,
                       ),
@@ -407,9 +394,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                   child: const Text(
                     'CHAR NOT FOUND',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 9,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.warning,
                     ),
                   ),
@@ -425,9 +411,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               Text(
                 gasAdc != null ? '$gasAdc' : '--',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 34,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: gasColor,
                 ),
               ),
@@ -435,7 +420,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               const Text(
                 '/ 4095 (12-bit Counts)',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
@@ -471,7 +455,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               Text(
                 '${(fraction * 100).toStringAsFixed(1)}% Full-Scale',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: gasColor,
@@ -508,9 +491,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
               const Text(
                 'LIVE TELEMETRY STREAM',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -539,7 +521,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                     child: Text(
                       'Awaiting sensor telemetry packets…',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
                         color: AppColors.textMuted,
                       ),
@@ -568,9 +549,8 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 9,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: isSelected ? Colors.white : AppColors.textSecondary,
           ),
         ),
@@ -643,16 +623,13 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, size: 16, color: AppColors.textMuted),
+          Icon(Icons.info_outline_rounded, size: 16, color: AppColors.secondary),
           SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
-              'MQ-2 / MQ-135 displays raw analog-to-digital converter (ADC) counts (0–4095). '
-              'Raw ADC reflects analog sensor conductivity and is NOT ppm or AQI. '
-              'Gas ppm calibration requires multi-hour burn-in and controlled target gas referencing.',
+              'Sensor note: MQ-2 / MQ-135 values are raw 12-bit ADC counts (0–4095). Readings reflect analog conductivity and do not represent calibrated ppm or AQI.',
               style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 10,
+                fontSize: 11,
                 color: AppColors.textSecondary,
                 height: 1.4,
               ),
@@ -694,7 +671,6 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
                     ? 'Telemetry CSV exported successfully'
                     : 'No telemetry data to export',
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,

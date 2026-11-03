@@ -87,11 +87,10 @@ class SensorValueTile extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ),
@@ -124,13 +123,12 @@ class SensorValueTile extends StatelessWidget {
                 Text(
                   value!.toStringAsFixed(1),
                   style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w700,
                     color: isStale
                         ? AppColors.textMuted
                         : accentColor,
-                    letterSpacing: -1.5,
+                    letterSpacing: -1.0,
                     height: 1.0,
                   ),
                 )
@@ -138,11 +136,10 @@ class SensorValueTile extends StatelessWidget {
                 const Text(
                   '--.-',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textMuted,
-                    letterSpacing: -1.5,
+                    letterSpacing: -1.0,
                     height: 1.0,
                   ),
                 ),
@@ -152,13 +149,12 @@ class SensorValueTile extends StatelessWidget {
                 child: Text(
                   unit,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: isStale
                         ? AppColors.textMuted
                         : accentColor.withOpacity(0.7),
-                    letterSpacing: -0.3,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ),
@@ -177,22 +173,20 @@ class SensorValueTile extends StatelessWidget {
             Text(
               'Updated ${_formatLastUpdate(lastUpdate!)}',
               style: const TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textMuted,
-                letterSpacing: 0.2,
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textSecondary,
+                letterSpacing: 0.1,
               ),
             )
           else if (!hasValue)
             const Text(
               'No data received',
               style: TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
+                fontSize: 11,
+                fontWeight: FontWeight.w400,
                 color: AppColors.textMuted,
-                letterSpacing: 0.2,
+                letterSpacing: 0.1,
               ),
             ),
         ],

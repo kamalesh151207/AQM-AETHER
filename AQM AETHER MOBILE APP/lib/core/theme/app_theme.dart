@@ -1,65 +1,81 @@
 // AQM AETHER — Environmental Intelligence & Sensor Monitoring Platform
-// Clean Modern Industrial White Design System
+// Unified Design System: Deep Navy & Blue Modern IoT Interface
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
-  // Backgrounds & Surfaces (Predominantly White System)
-  static const Color backgroundPrimary = Color(0xFFF6F7F9);   // #F6F7F9 Canvas
-  static const Color backgroundSecondary = Color(0xFFFFFFFF);
-  static const Color cardBackground = Color(0xFFFFFFFF);       // #FFFFFF Primary Card
-  static const Color panelBackground = Color(0xFFFFFFFF);
-  static const Color elevatedSurface = Color(0xFFF1F3F6);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF1F3F6);
+  // ── Palette Specification ─────────────────────────────────────────────────
+  // Primary: Deep Navy #142B4A
+  static const Color primary = Color(0xFF142B4A);
+  static const Color navyPrimary = Color(0xFF142B4A);
+  static const Color navyHover = Color(0xFF1E3A63);
+  static const Color navyPressed = Color(0xFF0F2038);
+  static const Color navyLight = Color(0xFFEDF2F9);
+  static const Color navyBorder = Color(0xFF1E3A63);
 
-  // Exact Accents from AQM AETHER Specification
-  static const Color accentTemperature = Color(0xFFF47B45);   // Coral / Orange (#F47B45)
-  static const Color accentTemperatureLight = Color(0xFFFEF2EC);
-  static const Color accentHumidity = Color(0xFF16B8A6);      // Teal / Cyan (#16B8A6)
-  static const Color accentHumidityLight = Color(0xFFE8F8F6);
-  static const Color accentAnalytics = Color(0xFF8065D9);     // Purple (#8065D9)
-  static const Color accentAnalyticsLight = Color(0xFFF3F0FB);
-  static const Color connection = Color(0xFF20A36B);          // Green (#20A36B)
-  static const Color connectionLight = Color(0xFFE9F6F0);
+  // Secondary: Blue #2563EB
+  static const Color secondary = Color(0xFF2563EB);
+  static const Color secondaryHover = Color(0xFF1D4ED8);
+  static const Color secondaryLight = Color(0xFFEFF6FF);
+
+  // Background & Surface: #F5F7FA & #FFFFFF
+  static const Color backgroundPrimary = Color(0xFFF5F7FA);
+  static const Color backgroundSecondary = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceVariant = Color(0xFFF1F4F9);
+  static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color panelBackground = Color(0xFFFFFFFF);
+  static const Color elevatedSurface = Color(0xFFF8FAFC);
+
+  // Typography: Primary #172033 & Secondary #667085
+  static const Color textPrimary = Color(0xFF172033);
+  static const Color textSecondary = Color(0xFF667085);
+  static const Color textMuted = Color(0xFF94A3B8);
 
   // Status & Telemetry
-  static const Color normal = Color(0xFF20A36B);              // Emerald Green (#20A36B)
-  static const Color normalLight = Color(0xFFE9F6F0);
-  static const Color success = Color(0xFF20A36B);             // Emerald Green (#20A36B)
-  static const Color successLight = Color(0xFFE9F6F0);
-  static const Color warning = Color(0xFFF2A93B);             // Amber (#F2A93B)
-  static const Color warningLight = Color(0xFFFEF6EB);
-  static const Color critical = Color(0xFFE74C3C);            // Red (#E74C3C)
-  static const Color criticalLight = Color(0xFFFDEDEC);
+  // Success: #16A34A
+  static const Color success = Color(0xFF16A34A);
+  static const Color successLight = Color(0xFFF0FDF4);
+  static const Color normal = Color(0xFF16A34A);
+  static const Color normalLight = Color(0xFFF0FDF4);
+  static const Color connection = Color(0xFF16A34A);
+  static const Color connectionLight = Color(0xFFF0FDF4);
 
-  // Brand / Default Accents
-  static const Color accentPrimary = Color(0xFF20A36B);       // Emerald Green (#20A36B)
-  static const Color accentPrimaryLight = Color(0xFFE9F6F0);
-  static const Color accentSecondary = Color(0xFF16B8A6);     // Teal / Cyan (#16B8A6)
-  static const Color accentSecondaryLight = Color(0xFFE8F8F6);
+  // Warning: #D97706
+  static const Color warning = Color(0xFFD97706);
+  static const Color warningLight = Color(0xFFFFFBEB);
 
-  // Navy / Blue Action Theme (Professional IoT Controls)
-  static const Color navyPrimary = Color(0xFF1B365D);       // Deep Navy Blue (#1B365D)
-  static const Color navyHover = Color(0xFF24487A);         // Lighter Navy Hover (#24487A)
-  static const Color navyPressed = Color(0xFF132742);       // Dark Navy Pressed (#132742)
-  static const Color navyLight = Color(0xFFEBF1F8);         // Navy Tint Background (#EBF1F8)
-  static const Color navyBorder = Color(0xFF2D507F);        // Navy Border Highlight
+  // Error / Critical: #DC2626
+  static const Color critical = Color(0xFFDC2626);
+  static const Color criticalLight = Color(0xFFFEF2F2);
+  static const Color error = Color(0xFFDC2626);
 
-  // Typography
-  static const Color textPrimary = Color(0xFF20242B);         // #20242B Primary Text
-  static const Color textSecondary = Color(0xFF7B8491);       // #7B8491 Secondary Text
-  static const Color textMuted = Color(0xFF9EA7B4);           // Muted Slate
+  // Border: #E5E7EB
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color borderSubtle = Color(0xFFF1F5F9);
+  static const Color borderMedium = Color(0xFFD1D5DB);
+  static const Color borderFocus = Color(0xFF2563EB);
 
-  // Dividers & Hairlines
-  static const Color border = Color(0xFFE8EBEF);              // #E8EBEF Clean hairline border
-  static const Color borderSubtle = Color(0xFFF0F2F6);
-  static const Color borderMedium = Color(0xFFD6DBE1);
-  static const Color borderFocus = Color(0xFFCBD5E1);
+  // Sensor Accents (Consistent Semantic Highlights)
+  static const Color accentTemperature = Color(0xFFEA580C);      // Amber / Orange
+  static const Color accentTemperatureLight = Color(0xFFFFF7ED);
+  static const Color accentHumidity = Color(0xFF0284C7);         // Blue / Cyan
+  static const Color accentHumidityLight = Color(0xFFF0F9FF);
+  static const Color accentGas = Color(0xFF7C3AED);              // Purple / Violet
+  static const Color accentGasLight = Color(0xFFF5F3FF);
+  static const Color accentAnalytics = Color(0xFF2563EB);
+  static const Color accentAnalyticsLight = Color(0xFFEFF6FF);
+
+  // Backward Compatibility Aliases
+  static const Color accentPrimary = Color(0xFF142B4A);
+  static const Color accentPrimaryLight = Color(0xFFEDF2F9);
+  static const Color accentSecondary = Color(0xFF2563EB);
+  static const Color accentSecondaryLight = Color(0xFFEFF6FF);
 
   // Visualizations
-  static const Color chartGrid = Color(0xFFEDF1F5);
-  static const Color chartTooltipBg = Color(0xFF20242B);
+  static const Color chartGrid = Color(0xFFE2E8F0);
+  static const Color chartTooltipBg = Color(0xFF172033);
 }
 
 abstract class AppSpacing {
@@ -85,23 +101,23 @@ abstract class AppRadius {
 abstract class AppShadows {
   static const List<BoxShadow> card = [
     BoxShadow(
-      color: Color(0x08000000),
-      offset: Offset(0, 2),
-      blurRadius: 8,
+      color: Color(0x06000000),
+      offset: Offset(0, 1),
+      blurRadius: 3,
       spreadRadius: 0,
     ),
     BoxShadow(
       color: Color(0x04000000),
-      offset: Offset(0, 1),
-      blurRadius: 2,
+      offset: Offset(0, 4),
+      blurRadius: 10,
       spreadRadius: 0,
     ),
   ];
 
   static const List<BoxShadow> elevated = [
     BoxShadow(
-      color: Color(0x0C000000),
-      offset: Offset(0, 6),
+      color: Color(0x0A000000),
+      offset: Offset(0, 4),
       blurRadius: 16,
       spreadRadius: -2,
     ),
@@ -109,7 +125,7 @@ abstract class AppShadows {
 
   static const List<BoxShadow> activePill = [
     BoxShadow(
-      color: Color(0x1510B981),
+      color: Color(0x12142B4A),
       offset: Offset(0, 2),
       blurRadius: 6,
       spreadRadius: 0,
@@ -119,32 +135,35 @@ abstract class AppShadows {
 
 abstract class AppTheme {
   static ThemeData get lightTheme {
+    final baseTextTheme = _buildTextTheme();
+    final googleSansTheme = GoogleFonts.googleSansTextTheme(baseTextTheme);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: GoogleFonts.googleSans().fontFamily,
       scaffoldBackgroundColor: AppColors.backgroundPrimary,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.accentPrimary,
-        secondary: AppColors.accentSecondary,
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
         surface: AppColors.cardBackground,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimary,
         error: AppColors.critical,
       ),
-      textTheme: _buildTextTheme(),
-      appBarTheme: const AppBarTheme(
+      textTheme: googleSansTheme,
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0.5,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: 'Manrope',
+        titleTextStyle: GoogleFonts.googleSans(
           fontSize: 18,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
-          letterSpacing: -0.3,
+          letterSpacing: -0.2,
         ),
       ),
       dividerTheme: const DividerThemeData(
@@ -162,88 +181,171 @@ abstract class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accentPrimary,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'Manrope',
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.border),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.secondary,
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
     );
   }
 
-  // Alias for backward compatibility if referenced
+  // Backward compatibility alias
   static ThemeData get darkTheme => lightTheme;
 
+  /// Typography hierarchy defined strictly in accordance with specification:
+  /// - Display headings: Google Sans, bold (w700), 28–32px
+  /// - Page headings: Google Sans, semibold (w600), 22–26px
+  /// - Section headings: Google Sans, semibold (w600), 16–20px
+  /// - Body: Google Sans, regular (w400), 14–16px
+  /// - Supporting text: Google Sans, regular (w400), 12–13px
+  /// - Buttons: Google Sans, medium/semibold (w500/w600), 14–16px
+  /// - Small labels: Google Sans, medium (w500), 11–12px
   static TextTheme _buildTextTheme() {
-    return const TextTheme(
-      headlineLarge: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 28,
-        fontWeight: FontWeight.w800,
+    return TextTheme(
+      // Display Headings: bold, 28–32px
+      displayLarge: GoogleFonts.googleSans(
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         letterSpacing: -0.8,
+        height: 1.2,
       ),
-      headlineMedium: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 22,
+      displayMedium: GoogleFonts.googleSans(
+        fontSize: 30,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        letterSpacing: -0.6,
+        height: 1.2,
+      ),
+      displaySmall: GoogleFonts.googleSans(
+        fontSize: 28,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         letterSpacing: -0.5,
+        height: 1.25,
       ),
-      titleLarge: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        letterSpacing: -0.3,
-      ),
-      titleMedium: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 14,
+
+      // Page Headings: semibold, 22–26px
+      headlineLarge: GoogleFonts.googleSans(
+        fontSize: 26,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
+        letterSpacing: -0.5,
+        height: 1.25,
       ),
-      bodyLarge: TextStyle(
-        fontFamily: 'Manrope',
+      headlineMedium: GoogleFonts.googleSans(
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        letterSpacing: -0.4,
+        height: 1.3,
+      ),
+      headlineSmall: GoogleFonts.googleSans(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        letterSpacing: -0.3,
+        height: 1.3,
+      ),
+
+      // Section Headings: semibold, 16–20px
+      titleLarge: GoogleFonts.googleSans(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        letterSpacing: -0.2,
+        height: 1.35,
+      ),
+      titleMedium: GoogleFonts.googleSans(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        letterSpacing: -0.1,
+        height: 1.35,
+      ),
+      titleSmall: GoogleFonts.googleSans(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        letterSpacing: 0,
+        height: 1.4,
+      ),
+
+      // Body: regular, 14–16px
+      bodyLarge: GoogleFonts.googleSans(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textPrimary,
+        height: 1.5,
+      ),
+      bodyMedium: GoogleFonts.googleSans(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
         height: 1.5,
       ),
-      bodyMedium: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 12,
+
+      // Supporting Text: regular, 12–13px
+      bodySmall: GoogleFonts.googleSans(
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
-        height: 1.4,
+        height: 1.45,
       ),
-      bodySmall: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 11,
-        fontWeight: FontWeight.w400,
-        color: AppColors.textMuted,
-      ),
-      labelLarge: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-        letterSpacing: 0.4,
-      ),
-      labelSmall: TextStyle(
-        fontFamily: 'Manrope',
-        fontSize: 10,
+
+      // Buttons: medium/semibold, 14–16px
+      labelLarge: GoogleFonts.googleSans(
+        fontSize: 14,
         fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        letterSpacing: 0.2,
+      ),
+
+      // Small Labels: medium, 11–12px
+      labelMedium: GoogleFonts.googleSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
         color: AppColors.textSecondary,
-        letterSpacing: 0.5,
+        letterSpacing: 0.3,
+      ),
+      labelSmall: GoogleFonts.googleSans(
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textMuted,
+        letterSpacing: 0.4,
       ),
     );
   }

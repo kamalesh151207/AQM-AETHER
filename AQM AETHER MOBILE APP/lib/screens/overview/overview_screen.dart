@@ -182,9 +182,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   const Text(
                     'AQM AETHER',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.6,
                     ),
@@ -195,7 +194,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const Text(
                 'Intelligent Environmental Monitoring',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textSecondary,
@@ -221,16 +219,14 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Text(
                 AppUtils.formatTime(_now),
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
               Text(
                 AppUtils.formatDate(_now),
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 9,
                   color: AppColors.textMuted,
                   fontWeight: FontWeight.w500,
@@ -295,9 +291,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     Text(
                       bannerTitle,
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.critical,
                         letterSpacing: 0.3,
                       ),
@@ -308,7 +303,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                           ? 'Audible tone muted temporarily'
                           : (isAck ? 'Alarm sound acknowledged' : 'Audible warning sounding continuously'),
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 11,
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -323,7 +317,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
           Text(
             'Measured Values: Temp $measuredTemp°C (Limit: ${thresholdService.temperatureThreshold}°C) • Hum $measuredHum% (Limit: ${thresholdService.humidityThreshold}%)',
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -339,7 +332,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () => thresholdService.acknowledgeAlert(),
                     icon: const Icon(Icons.check_circle_outline, size: 14),
-                    label: const Text('ACKNOWLEDGE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+                    label: const Text('ACKNOWLEDGE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.critical,
                       foregroundColor: Colors.white,
@@ -361,7 +354,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   ),
                   label: Text(
                     isMuted ? 'UNMUTE' : 'MUTE 15M',
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.critical),
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.critical),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.critical),
@@ -382,7 +375,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   ),
                   child: const Row(
                     children: [
-                      Text('DETAILS', style: TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                      Text('DETAILS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                       SizedBox(width: 2),
                       Icon(Icons.arrow_forward_ios_rounded, size: 10, color: AppColors.textPrimary),
                     ],
@@ -463,9 +456,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     const Text(
                       'ENVIRONMENTAL STATE',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textSecondary,
                         letterSpacing: 0.6,
                       ),
@@ -474,9 +466,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     Text(
                       statusTitle,
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: statusColor,
                       ),
                     ),
@@ -493,9 +484,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   isConnected ? 'LIVE' : 'STANDBY',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: statusColor,
                     letterSpacing: 0.5,
                   ),
@@ -507,7 +497,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
           Text(
             statusDesc,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.textSecondary,
@@ -568,9 +557,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                       child: Text(
                         deviceProvider.device.name,
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
                         maxLines: 1,
@@ -587,9 +575,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                       child: Text(
                         status.label.toUpperCase(),
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 9,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                           color: badgeColor,
                           letterSpacing: 0.4,
                         ),
@@ -606,7 +593,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                           ? deviceProvider.device.errorMessage!
                           : status.userMessage),
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     color: !isBtOn ||
                             status == DeviceConnectionStatus.error ||
@@ -649,7 +635,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                             status == DeviceConnectionStatus.connectionFailed)
                         ? 'RETRY'
                         : 'CONNECT'),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
               ),
             )
           else
@@ -733,9 +719,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
           const Text(
             'TEMPERATURE',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
               letterSpacing: 0.6,
             ),
@@ -748,9 +733,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Text(
                 temp != null ? AppUtils.formatTemperature(temp) : '—',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 32,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: isBreached ? AppColors.critical : AppColors.textPrimary,
                   letterSpacing: -1.0,
                 ),
@@ -759,7 +743,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const Text(
                 '°C',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accentTemperature,
@@ -775,7 +758,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   trendStr,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
@@ -794,7 +776,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   '≤${thresholdService.temperatureThreshold.toStringAsFixed(0)}°C',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: isBreached ? AppColors.critical : AppColors.textMuted,
@@ -836,7 +817,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
               alignment: Alignment.centerLeft,
               child: const Text(
                 'Awaiting telemetry…',
-                style: TextStyle(fontFamily: 'Manrope', fontSize: 10, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 10, color: AppColors.textMuted),
               ),
             ),
         ],
@@ -888,9 +869,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
           const Text(
             'HUMIDITY',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
               letterSpacing: 0.6,
             ),
@@ -903,9 +883,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Text(
                 hum != null ? AppUtils.formatHumidity(hum) : '—',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 32,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: isBreached ? AppColors.critical : AppColors.textPrimary,
                   letterSpacing: -1.0,
                 ),
@@ -914,7 +893,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const Text(
                 '%',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.accentHumidity,
@@ -930,7 +908,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   'Relative',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textSecondary,
@@ -949,7 +926,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   '≤${thresholdService.humidityThreshold.toStringAsFixed(0)}%',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     color: isBreached ? AppColors.critical : AppColors.textMuted,
@@ -977,7 +953,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 ? 'Updated ${AppUtils.formatRelativeTime(deviceProvider.lastHumidityUpdate!)}'
                 : 'Awaiting first sample',
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w500,
               color: AppColors.textMuted,
@@ -1046,9 +1021,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
           const Text(
             'GAS RAW ADC',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
               letterSpacing: 0.6,
             ),
@@ -1061,9 +1035,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Text(
                 gasAdc != null ? '$gasAdc' : '—',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 28,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: isConnected && gasAdc != null ? color : AppColors.textPrimary,
                   letterSpacing: -1.0,
                 ),
@@ -1072,7 +1045,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const Text(
                 'ADC',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
@@ -1086,7 +1058,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 ? 'MQ-2 / MQ-135 telemetry active'
                 : 'Raw ADC stream (GPIO 34)',
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               color: AppColors.textMuted,
             ),
@@ -1135,9 +1106,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   mpuFound ? '6-AXIS' : 'INACTIVE',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 9,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: mpuFound ? AppColors.normal : AppColors.textMuted,
                   ),
                 ),
@@ -1148,9 +1118,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
           const Text(
             'MPU6050 MOTION',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
               letterSpacing: 0.6,
             ),
@@ -1160,9 +1129,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
             const Text(
               'NOT AVAILABLE',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 14,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textMuted,
                 letterSpacing: 0.2,
               ),
@@ -1171,7 +1139,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
             const Text(
               'Firmware char absent',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
                 color: AppColors.textMuted,
               ),
@@ -1186,9 +1153,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 Text(
                   mag != null ? mag.toStringAsFixed(2) : '—',
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 28,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     letterSpacing: -1.0,
                   ),
@@ -1197,7 +1163,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 const Text(
                   'g',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textMuted,
@@ -1209,7 +1174,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
             Text(
               deviceProvider.motionState,
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: AppColors.normal,
@@ -1236,9 +1200,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
           const Text(
             'QUICK MONITORING CONTROLS',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
               letterSpacing: 0.5,
             ),
@@ -1304,7 +1267,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: color,
@@ -1339,9 +1301,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(
                   'DEVICE TELEMETRY & HEALTH',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     letterSpacing: 0.5,
                   ),
@@ -1354,7 +1315,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: const Text(
                   'Configure',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.accentSecondary,
@@ -1427,9 +1387,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const Text(
                 'SMART DATA INSIGHTS',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                   letterSpacing: 0.5,
                 ),
@@ -1456,7 +1415,6 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     child: Text(
                       item,
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
                         color: AppColors.textSecondary,
                         height: 1.4,
@@ -1493,7 +1451,6 @@ class _HealthMetricRow extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
@@ -1506,7 +1463,6 @@ class _HealthMetricRow extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: valueColor ?? AppColors.textPrimary,

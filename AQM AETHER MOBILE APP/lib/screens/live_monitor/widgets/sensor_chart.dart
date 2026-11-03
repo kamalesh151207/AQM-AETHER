@@ -171,7 +171,6 @@ class _SensorChartState extends State<SensorChart>
                       child: Text(
                         value.toStringAsFixed(0),
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textMuted,
@@ -204,7 +203,6 @@ class _SensorChartState extends State<SensorChart>
                       child: Text(
                         _formatAxisTime(match),
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textMuted,
@@ -246,7 +244,6 @@ class _SensorChartState extends State<SensorChart>
                     return LineTooltipItem(
                       '${ts.y.toStringAsFixed(1)} ${widget.valueUnit}\n',
                       TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: widget.lineColor,
@@ -255,7 +252,6 @@ class _SensorChartState extends State<SensorChart>
                         TextSpan(
                           text: timeStr,
                           style: const TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textSecondary,
@@ -352,7 +348,6 @@ class _EmptyChartState extends StatelessWidget {
             const Text(
               'No data recorded yet',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textMuted,
@@ -362,7 +357,6 @@ class _EmptyChartState extends StatelessWidget {
             const Text(
               'Connect to AQM-Kamalesh to begin monitoring',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
                 color: AppColors.textMuted,

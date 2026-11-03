@@ -149,7 +149,6 @@ class _ExportCsvButtonState extends State<ExportCsvButton> {
                       Text(
                         widget.loadingLabel,
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: fontSize,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,
@@ -166,7 +165,6 @@ class _ExportCsvButtonState extends State<ExportCsvButton> {
                       Text(
                         widget.label,
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: fontSize,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.2,

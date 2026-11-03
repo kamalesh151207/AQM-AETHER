@@ -42,9 +42,8 @@ class MotionScreen extends StatelessWidget {
                 const Text(
                   'MOTION TELEMETRY',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     letterSpacing: 0.5,
                   ),
@@ -96,12 +95,8 @@ class MotionScreen extends StatelessWidget {
 
                   // 5. Motion Waveform Chart
                   _buildMotionChartCard(monProv),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.xl),
                 ],
-
-              // Hardware Pinout Guidance Card
-              _buildPinoutGuideCard(),
-              const SizedBox(height: AppSpacing.xl),
             ],
           ),
         );
@@ -134,9 +129,8 @@ class MotionScreen extends StatelessWidget {
                 child: Text(
                   'MPU6050 NOT AVAILABLE',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                     letterSpacing: 0.5,
                   ),
@@ -148,7 +142,6 @@ class MotionScreen extends StatelessWidget {
           const Text(
             'The MPU6050 accelerometer & gyroscope characteristics are not advertised by the connected ESP32 firmware.',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               color: AppColors.textSecondary,
               height: 1.4,
@@ -170,7 +163,6 @@ class MotionScreen extends StatelessWidget {
                   child: Text(
                     'No synthetic or mock motion data is generated.',
                     style: TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textMuted,
@@ -200,9 +192,8 @@ class MotionScreen extends StatelessWidget {
                 Text(
                   'DISCONNECTED',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 13,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -210,7 +201,6 @@ class MotionScreen extends StatelessWidget {
                 Text(
                   'Connect to AQM-Kamalesh in the Devices tab to stream motion telemetry.',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
@@ -240,9 +230,8 @@ class MotionScreen extends StatelessWidget {
               const Text(
                 'MOTION CLASSIFICATION',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
                   letterSpacing: 0.5,
                 ),
@@ -256,9 +245,8 @@ class MotionScreen extends StatelessWidget {
                 child: Text(
                   stateStr,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.normal,
                   ),
                 ),
@@ -273,9 +261,8 @@ class MotionScreen extends StatelessWidget {
               Text(
                 mag != null ? mag.toStringAsFixed(3) : '--',
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 34,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -283,7 +270,6 @@ class MotionScreen extends StatelessWidget {
               const Text(
                 'g (Vector Magnitude ||a||)',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMuted,
@@ -324,9 +310,8 @@ class MotionScreen extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 10,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: accent,
                 ),
               ),
@@ -343,14 +328,13 @@ class MotionScreen extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'monospace',
               fontSize: 16,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
           Text(
             unit,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 9,
               color: AppColors.textMuted,
             ),
@@ -373,9 +357,8 @@ class MotionScreen extends StatelessWidget {
           const Text(
             'ACCELERATION DYNAMICS',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
               letterSpacing: 0.5,
             ),
@@ -387,7 +370,7 @@ class MotionScreen extends StatelessWidget {
                 ? const Center(
                     child: Text(
                       'Awaiting MPU6050 packets…',
-                      style: TextStyle(fontFamily: 'Manrope', fontSize: 12, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
                   )
                 : LineChart(
@@ -442,9 +425,8 @@ class MotionScreen extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 11,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
             letterSpacing: 0.5,
           ),
@@ -452,90 +434,11 @@ class MotionScreen extends StatelessWidget {
         Text(
           subtitle,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 9,
             color: AppColors.textMuted,
           ),
         ),
       ],
-    );
-  }
-
-  // ── Hardware Wiring Guidance ───────────────────────────────────────────────
-
-  Widget _buildPinoutGuideCard() {
-    return AppCard(
-      color: AppColors.backgroundPrimary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.memory_rounded, size: 16, color: AppColors.accentPrimary),
-              SizedBox(width: AppSpacing.sm),
-              Text(
-                'MPU6050 HARDWARE INTEGRATION GUIDE',
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'To enable 6-axis motion streaming, connect MPU6050 to ESP32 I2C pins:',
-            style: TextStyle(fontFamily: 'Manrope', fontSize: 11, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 6),
-          _buildPinRow('VCC', '3.3V or 5V (board regulated)'),
-          _buildPinRow('GND', 'Common Ground'),
-          _buildPinRow('SDA', 'ESP32 GPIO 21 (I2C Data)'),
-          _buildPinRow('SCL', 'ESP32 GPIO 22 (I2C Clock)'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPinRow(String pin, String connection) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: Text(
-              pin,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              connection,
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                fontSize: 10,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -554,7 +457,7 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(fontFamily: 'Manrope', fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
         ),
       ],
     );

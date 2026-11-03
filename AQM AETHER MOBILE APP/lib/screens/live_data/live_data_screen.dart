@@ -141,7 +141,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
               Text(
                 'LIVE TELEMETRY',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
@@ -152,7 +151,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
               Text(
                 'High-frequency BLE sensor streams',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
@@ -196,7 +194,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     Text(
                       isPaused ? 'RESUME' : 'PAUSE',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: isPaused
@@ -264,7 +261,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     const Text(
                       'TEMPERATURE',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textSecondary,
@@ -286,7 +282,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     Text(
                       temp != null ? AppUtils.formatTemperature(temp) : '—',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         color: isTempCrit ? AppColors.critical : AppColors.textPrimary,
@@ -297,7 +292,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     Text(
                       '°C',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: isTempCrit ? AppColors.critical : AppColors.accentTemperature,
@@ -315,7 +309,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                             ? 'L: ${minTemp.toStringAsFixed(1)}° | H: ${maxTemp.toStringAsFixed(1)}°'
                             : 'Awaiting data',
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
@@ -333,7 +326,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                       child: Text(
                         '≤${thresholdService.temperatureThreshold}°C',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 8,
                           fontWeight: FontWeight.w700,
                           color: isTempCrit ? AppColors.critical : AppColors.textMuted,
@@ -361,7 +353,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     const Text(
                       'HUMIDITY',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textSecondary,
@@ -383,7 +374,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     Text(
                       hum != null ? AppUtils.formatHumidity(hum) : '—',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
                         color: isHumCrit ? AppColors.critical : AppColors.textPrimary,
@@ -394,7 +384,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     Text(
                       '%',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: isHumCrit ? AppColors.critical : AppColors.accentHumidity,
@@ -412,7 +401,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                             ? 'L: ${minHum.toStringAsFixed(1)}% | H: ${maxHum.toStringAsFixed(1)}%'
                             : 'Awaiting data',
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
@@ -430,7 +418,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                       child: Text(
                         '≤${thresholdService.humidityThreshold}%',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 8,
                           fontWeight: FontWeight.w700,
                           color: isHumCrit ? AppColors.critical : AppColors.textMuted,
@@ -477,7 +464,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     child: Text(
                       w.label,
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 11,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                         color: isSelected
@@ -532,7 +518,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                   ),
                 ),
                 labelStyle: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
@@ -566,7 +551,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                   ? 'Awaiting Sensor Telemetry…'
                   : 'ESP32 Device Disconnected',
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
@@ -579,7 +563,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                   : 'Connect to AQM-Kamalesh from Overview or Command Center to start live stream.',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 12,
                 color: AppColors.textSecondary,
               ),
@@ -666,7 +649,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                     const Text(
                       'TELEMETRY STREAM',
                       style: TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -684,7 +666,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                         child: const Text(
                           'PAUSED',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
                             color: AppColors.warning,
@@ -699,7 +680,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
               Text(
                 'Window: ${_selectedWindow.title}',
                 style: const TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   color: AppColors.textMuted,
                   fontWeight: FontWeight.w600,
@@ -738,7 +718,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                         return Text(
                           value.toInt().toString(),
                           style: const TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 10,
                             color: AppColors.textMuted,
                             fontWeight: FontWeight.w600,
@@ -781,7 +760,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                           alignment: Alignment.topRight,
                           padding: const EdgeInsets.only(right: 6, bottom: 2),
                           style: const TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
                             color: AppColors.accentTemperature,
@@ -800,7 +778,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                           alignment: Alignment.topRight,
                           padding: const EdgeInsets.only(right: 6, bottom: 2),
                           style: const TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 9,
                             fontWeight: FontWeight.w800,
                             color: AppColors.accentHumidity,
@@ -820,7 +797,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
                         return LineTooltipItem(
                           '${isTemp ? "Temp" : "Hum"}: ${spot.y.toStringAsFixed(1)}${isTemp ? "°C" : "%"}',
                           TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: spot.bar.color,
@@ -865,7 +841,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
         Text(
           label,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 11,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w600,
@@ -904,7 +879,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
           const Text(
             'WINDOW TELEMETRY SUMMARY',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
@@ -930,7 +904,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
         Text(
           label,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 11,
             color: AppColors.textMuted,
             fontWeight: FontWeight.w500,
@@ -940,7 +913,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
         Text(
           value,
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 14,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
@@ -951,7 +923,6 @@ class _LiveDataScreenState extends State<LiveDataScreen> {
   }
 
   static const _axisStyle = TextStyle(
-    fontFamily: 'Manrope',
     fontSize: 10,
     color: AppColors.textMuted,
     fontWeight: FontWeight.w500,

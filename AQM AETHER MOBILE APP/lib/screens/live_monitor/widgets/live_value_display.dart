@@ -87,7 +87,6 @@ class _LiveValueDisplayState extends State<LiveValueDisplay>
                 return Text(
                   displayText,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 52,
                     fontWeight: FontWeight.w800,
                     color: widget.value == null
@@ -106,7 +105,6 @@ class _LiveValueDisplayState extends State<LiveValueDisplay>
                 child: Text(
                   widget.unit,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 20,
                     fontWeight: FontWeight.w500,
                     color: widget.color.withOpacity(0.7),
@@ -183,7 +181,6 @@ class _LiveBadge extends StatelessWidget {
           Text(
             'LIVE',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: isLive ? AppColors.success : AppColors.textMuted,

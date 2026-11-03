@@ -30,9 +30,8 @@ class SectionHeader extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontFamily: 'Manrope',
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.2,
                     ),
@@ -42,10 +41,9 @@ class SectionHeader extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: const TextStyle(
-                        fontFamily: 'Manrope',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textMuted,
+                        color: AppColors.textSecondary,
                         height: 1.4,
                       ),
                     ),

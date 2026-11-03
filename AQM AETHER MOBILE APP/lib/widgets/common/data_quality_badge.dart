@@ -65,11 +65,10 @@ class DataQualityBadge extends StatelessWidget {
           Text(
             quality.label,
             style: TextStyle(
-              fontFamily: 'Manrope',
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
               color: _color,
-              letterSpacing: 0.4,
+              letterSpacing: 0.3,
             ),
           ),
         ],

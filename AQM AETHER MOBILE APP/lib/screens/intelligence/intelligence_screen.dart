@@ -59,7 +59,6 @@ class _ScreenHeader extends StatelessWidget {
         Text(
           'Intelligence',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 28,
             fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
@@ -70,7 +69,6 @@ class _ScreenHeader extends StatelessWidget {
         Text(
           'Environmental Analysis',
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: AppColors.textMuted,
@@ -135,7 +133,6 @@ class _Panel extends StatelessWidget {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
@@ -147,7 +144,6 @@ class _Panel extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: const TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 11,
                             color: AppColors.textMuted,
                           ),
@@ -196,7 +192,6 @@ class _StatisticalSummaryPanel extends StatelessWidget {
                   'Insufficient data — connect device to begin recording',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 13,
                     color: AppColors.textMuted,
                     height: 1.5,
@@ -294,7 +289,6 @@ class _StatsColumn extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: color,
@@ -305,7 +299,6 @@ class _StatsColumn extends StatelessWidget {
           const Text(
             'No data',
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               color: AppColors.textMuted,
             ),
@@ -320,7 +313,6 @@ class _StatsColumn extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 9,
             fontWeight: FontWeight.w700,
             color: color,
@@ -364,7 +356,6 @@ class _StatRow extends StatelessWidget {
           child: Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: AppColors.textMuted,
@@ -375,7 +366,6 @@ class _StatRow extends StatelessWidget {
         Text(
           value.toStringAsFixed(1),
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: large ? 22 : 16,
             fontWeight: FontWeight.w700,
             color: color,
@@ -386,7 +376,6 @@ class _StatRow extends StatelessWidget {
         Text(
           unit,
           style: TextStyle(
-            fontFamily: 'Manrope',
             fontSize: large ? 12 : 10,
             fontWeight: FontWeight.w500,
             color: color.withOpacity(0.7),
@@ -422,7 +411,6 @@ class _MetaPill extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: color,
@@ -482,7 +470,6 @@ class _TrendAnalysisPanel extends StatelessWidget {
                 Text(
                   'Trend calculated from last 20 recorded readings',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 11,
                     color: AppColors.textMuted,
                   ),
@@ -561,7 +548,6 @@ class _TrendCard extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 9,
               fontWeight: FontWeight.w700,
               color: accentColor,
@@ -595,7 +581,6 @@ class _TrendCard extends StatelessWidget {
                 child: Text(
                   _trendLabel,
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: _trendColor,
@@ -643,7 +628,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                         child: Text(
                           'TIME',
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textMuted,
@@ -657,7 +641,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                           'TEMP',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textMuted,
@@ -671,7 +654,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                           'HUMIDITY',
                           textAlign: TextAlign.end,
                           style: TextStyle(
-                            fontFamily: 'Manrope',
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textMuted,
@@ -706,7 +688,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                               Text(
                                 timeStr,
                                 style: const TextStyle(
-                                  fontFamily: 'Manrope',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textPrimary,
@@ -715,7 +696,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                               Text(
                                 DateFormat('dd MMM').format(reading.timestamp),
                                 style: const TextStyle(
-                                  fontFamily: 'Manrope',
                                   fontSize: 10,
                                   color: AppColors.textMuted,
                                 ),
@@ -731,7 +711,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                                 : '—',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontFamily: 'Manrope',
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: AppColors.accentTemperature,
@@ -746,7 +725,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                                 : '—',
                             textAlign: TextAlign.end,
                             style: const TextStyle(
-                              fontFamily: 'Manrope',
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: AppColors.accentHumidity,
@@ -770,7 +748,6 @@ class _EnvironmentalHistorySection extends StatelessWidget {
                       Text(
                         'Showing ${readings.length} of ${analytics.allReadings.length} total readings',
                         style: const TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 11,
                           color: AppColors.textMuted,
                         ),
@@ -797,7 +774,6 @@ class _EmptyHistoryState extends StatelessWidget {
             Text(
               'No readings recorded yet',
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
@@ -808,7 +784,6 @@ class _EmptyHistoryState extends StatelessWidget {
               'Connect a device to start collecting environmental data',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontFamily: 'Manrope',
                 fontSize: 12,
                 color: AppColors.textMuted,
                 height: 1.5,
@@ -917,7 +892,6 @@ class _EventAnalysisPanel extends StatelessWidget {
               const Text(
                 'No events logged yet',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 12,
                   color: AppColors.textMuted,
                 ),
@@ -971,7 +945,6 @@ class _EventBadge extends StatelessWidget {
                 Text(
                   '$count',
                   style: TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: color,
@@ -981,7 +954,6 @@ class _EventBadge extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontFamily: 'Manrope',
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textMuted,
@@ -1117,7 +1089,6 @@ class _DataExportSectionState extends State<_DataExportSection> {
                       Text(
                         _exporting ? 'Exporting…' : 'Export to CSV',
                         style: TextStyle(
-                          fontFamily: 'Manrope',
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: hasData
@@ -1135,7 +1106,6 @@ class _DataExportSectionState extends State<_DataExportSection> {
               const Text(
                 'No data to export — connect device and record readings first.',
                 style: TextStyle(
-                  fontFamily: 'Manrope',
                   fontSize: 11,
                   color: AppColors.textMuted,
                   height: 1.4,
@@ -1170,7 +1140,6 @@ class _ExportInfoRow extends StatelessWidget {
         Text(
           '$label: ',
           style: const TextStyle(
-            fontFamily: 'Manrope',
             fontSize: 12,
             color: AppColors.textMuted,
           ),
@@ -1179,7 +1148,6 @@ class _ExportInfoRow extends StatelessWidget {
           child: Text(
             value,
             style: const TextStyle(
-              fontFamily: 'Manrope',
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
