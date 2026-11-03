@@ -1025,7 +1025,7 @@ class _DeviceLabScreenState extends State<DeviceLabScreen>
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: const Color(0xFF070C12),
+              color: AppColors.textPrimary,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: AppColors.borderSubtle, width: 1),
             ),

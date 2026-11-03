@@ -694,7 +694,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
       color = AppColors.normal;
       quality = 'Strong';
     } else if (rssi >= -75) {
-      color = const Color(0xFF16B8A6);
+      color = AppColors.primary;
       quality = 'Good';
     } else if (rssi >= -88) {
       color = AppColors.warning;

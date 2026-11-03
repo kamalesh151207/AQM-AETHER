@@ -653,7 +653,7 @@ class _EnvironmentScreenState extends State<EnvironmentScreen> {
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: ok ? AppColors.navyPrimary : const Color(0xFF20242B),
+        backgroundColor: ok ? AppColors.navyPrimary : AppColors.textPrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),

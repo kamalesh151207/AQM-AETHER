@@ -187,7 +187,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x1F123456),
+                      color: Color(0x1F0F172A),
                       offset: Offset(0, 3),
                       blurRadius: 8,
                     ),

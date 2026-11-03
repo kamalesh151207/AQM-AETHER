@@ -151,25 +151,22 @@ class _AqmBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final navBg = isDark ? AppColors.darkSurface : AppColors.cardBackground;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.border;
+    const navBg = Colors.white;
+    const borderColor = AppColors.border;
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: navBg,
         border: Border(
           top: BorderSide(color: borderColor, width: 1),
         ),
-        boxShadow: isDark
-            ? const []
-            : const [
-                BoxShadow(
-                  color: Color(0x06123456),
-                  offset: Offset(0, -2),
-                  blurRadius: 8,
-                ),
-              ],
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x060F172A),
+            offset: Offset(0, -2),
+            blurRadius: 8,
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -181,7 +178,6 @@ class _AqmBottomNavBar extends StatelessWidget {
                 child: _NavItem(
                   destination: destinations[i],
                   isSelected: currentIndex == i,
-                  isDark: isDark,
                   onTap: () => onTap(i),
                 ),
               );
@@ -196,23 +192,19 @@ class _AqmBottomNavBar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final _NavDestination destination;
   final bool isSelected;
-  final bool isDark;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.destination,
     required this.isSelected,
-    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = isDark ? AppColors.darkAccentCyan : AppColors.primaryBlue;
-    final inactiveColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final pillBg = isDark
-        ? (isSelected ? AppColors.darkElevated : Colors.transparent)
-        : (isSelected ? AppColors.accentCyanLight : Colors.transparent);
+    const activeColor = AppColors.primary;
+    const inactiveColor = AppColors.textSecondary;
+    final pillBg = isSelected ? AppColors.navyLight : Colors.transparent;
 
     return GestureDetector(
       onTap: onTap,
@@ -239,7 +231,7 @@ class _NavItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 9.5,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? (isDark ? AppColors.darkTextPrimary : AppColors.deepNavy) : inactiveColor,
+              color: isSelected ? AppColors.primary : inactiveColor,
               letterSpacing: 0.1,
             ),
             maxLines: 1,
