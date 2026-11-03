@@ -533,19 +533,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
               label: Text(filter.label),
               selected: isSelected,
               onSelected: (_) => setState(() => _selectedFilter = filter),
-              selectedColor: Colors.white,
-              backgroundColor: AppColors.backgroundPrimary,
+              selectedColor: AppColors.accentCyanLight,
+              backgroundColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.full),
                 side: BorderSide(
-                  color: isSelected ? AppColors.accentAnalytics : AppColors.border,
+                  color: isSelected ? AppColors.accentCyan : AppColors.border,
                   width: isSelected ? 1.5 : 1.0,
                 ),
               ),
               labelStyle: TextStyle(
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w600,
-                color: isSelected ? AppColors.accentAnalytics : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.deepNavy : AppColors.textSecondary,
               ),
             ),
           );

@@ -64,10 +64,10 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
-                  'BLE DEVICE LAB',
+                  'DEVICE MANAGEMENT',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: textColor,
                     letterSpacing: 0.5,
                   ),
@@ -593,19 +593,22 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
               children: [
                 // Compatibility Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: isAqm
-                        ? AppColors.accentPrimary.withOpacity(0.1)
-                        : AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ? AppColors.accentCyanLight
+                        : AppColors.mutedBackground,
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    border: Border.all(
+                      color: isAqm ? AppColors.accentCyan.withOpacity(0.3) : AppColors.border,
+                    ),
                   ),
                   child: Text(
                     isAqm ? 'AQM PROTOCOL VERIFIED' : 'GENERIC BLE PERIPHERAL',
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: isAqm ? AppColors.accentPrimary : AppColors.textSecondary,
+                      color: isAqm ? AppColors.primaryBlue : AppColors.textSecondary,
                     ),
                   ),
                 ),

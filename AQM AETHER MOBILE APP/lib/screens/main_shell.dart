@@ -1,9 +1,5 @@
-// AQM AETHER — Main Shell with 5-Section Industrial IoT Architecture
-// 1. Dashboard (Command Center)
-// 2. Devices (BLE Device Discovery & Link)
-// 3. Analytics (Historical Trends & Aggregation)
-// 4. History (Tabular Telemetry Logs & CSV Export)
-// 5. Settings (Hardware Configuration & System Controls)
+// AQM AETHER — Main Shell with 6-Section AETHER BLUE Navigation
+// 1. Dashboard  2. Devices  3. Environment  4. Motion  5. Alerts  6. Settings
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,8 +8,9 @@ import '../core/theme/app_theme.dart';
 import '../services/notifications/notification_service.dart';
 import 'overview/overview_screen.dart';
 import 'devices/devices_screen.dart';
-import 'analytics/analytics_screen.dart';
-import 'history/history_screen.dart';
+import 'environment/environment_screen.dart';
+import 'motion/motion_screen.dart';
+import 'alerts/alerts_screen.dart';
 import 'settings/settings_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -39,14 +36,19 @@ class _MainShellState extends State<MainShell> {
       label: 'DEVICES',
     ),
     _NavDestination(
-      icon: Icons.insights_rounded,
-      activeIcon: Icons.insights_rounded,
-      label: 'ANALYTICS',
+      icon: Icons.eco_outlined,
+      activeIcon: Icons.eco_rounded,
+      label: 'ENVIRONMENT',
     ),
     _NavDestination(
-      icon: Icons.history_rounded,
-      activeIcon: Icons.manage_history_rounded,
-      label: 'HISTORY',
+      icon: Icons.screen_rotation_outlined,
+      activeIcon: Icons.screen_rotation_rounded,
+      label: 'MOTION',
+    ),
+    _NavDestination(
+      icon: Icons.notifications_none_rounded,
+      activeIcon: Icons.notifications_active_rounded,
+      label: 'ALERTS',
     ),
     _NavDestination(
       icon: Icons.tune_outlined,
@@ -74,11 +76,13 @@ class _MainShellState extends State<MainShell> {
     if (payload == null) return;
     NotificationService().navigationPayloadNotifier.value = null;
 
-    if (payload == 'nav:alerts' || payload == 'nav:history') {
-      _onNavTap(3);
-    } else if (payload == 'nav:settings') {
+    if (payload == 'nav:alerts') {
       _onNavTap(4);
-    } else if (payload == 'nav:analytics' || payload == 'nav:live' || payload == 'nav:environment') {
+    } else if (payload == 'nav:settings') {
+      _onNavTap(5);
+    } else if (payload == 'nav:motion') {
+      _onNavTap(3);
+    } else if (payload == 'nav:environment' || payload == 'nav:live' || payload == 'nav:analytics') {
       _onNavTap(2);
     } else if (payload == 'nav:devices') {
       _onNavTap(1);
@@ -110,14 +114,16 @@ class _MainShellState extends State<MainShell> {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           OverviewScreen(
-            onNavigateToAnalytics: () => _onNavTap(2),
-            onNavigateToHistory: () => _onNavTap(3),
-            onNavigateToSettings: () => _onNavTap(4),
-            onNavigateToAlerts: () => _onNavTap(3),
+            onNavigateToEnvironment: () => _onNavTap(2),
+            onNavigateToDevices: () => _onNavTap(1),
+            onNavigateToMotion: () => _onNavTap(3),
+            onNavigateToAlerts: () => _onNavTap(4),
+            onNavigateToSettings: () => _onNavTap(5),
           ),
           const DevicesScreen(),
-          const AnalyticsScreen(),
-          const HistoryScreen(),
+          const EnvironmentScreen(),
+          const MotionScreen(),
+          const AlertsScreen(),
           const SettingsScreen(),
         ],
       ),
@@ -155,7 +161,15 @@ class _AqmBottomNavBar extends StatelessWidget {
         border: Border(
           top: BorderSide(color: borderColor, width: 1),
         ),
-        boxShadow: isDark ? const [] : AppShadows.card,
+        boxShadow: isDark
+            ? const []
+            : const [
+                BoxShadow(
+                  color: Color(0x06123456),
+                  offset: Offset(0, -2),
+                  blurRadius: 8,
+                ),
+              ],
       ),
       child: SafeArea(
         top: false,
@@ -194,11 +208,11 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy;
+    final activeColor = isDark ? AppColors.darkAccentCyan : AppColors.primaryBlue;
     final inactiveColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     final pillBg = isDark
         ? (isSelected ? AppColors.darkElevated : Colors.transparent)
-        : (isSelected ? AppColors.mutedBackground : Colors.transparent);
+        : (isSelected ? AppColors.accentCyanLight : Colors.transparent);
 
     return GestureDetector(
       onTap: onTap,
@@ -208,7 +222,7 @@ class _NavItem extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: pillBg,
               borderRadius: BorderRadius.circular(AppRadius.full),
@@ -223,10 +237,10 @@ class _NavItem extends StatelessWidget {
           Text(
             destination.label,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? activeColor : inactiveColor,
-              letterSpacing: 0.3,
+              fontSize: 9.5,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              color: isSelected ? (isDark ? AppColors.darkTextPrimary : AppColors.deepNavy) : inactiveColor,
+              letterSpacing: 0.1,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
