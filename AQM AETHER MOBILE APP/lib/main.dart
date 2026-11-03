@@ -96,7 +96,7 @@ class _AqmAetherAppState extends State<AqmAetherApp> with WidgetsBindingObserver
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     return MaterialApp(
-      title: 'AQM AETHER',
+      title: 'AERION AQM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

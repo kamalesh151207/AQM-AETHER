@@ -32,11 +32,16 @@ class AppCard extends StatelessWidget {
     final defaultBg = isDark ? AppColors.darkSurface : AppColors.cardBackground;
     final defaultBorder = isDark ? AppColors.darkBorder : AppColors.border;
 
+    Color? effectiveCardColor = color;
+    if (color == AppColors.backgroundSecondary || color == AppColors.cardBackground || color == Colors.white) {
+      effectiveCardColor = defaultBg;
+    }
+
     final container = Container(
       margin: margin,
       padding: padding ?? const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
-        color: color ?? defaultBg,
+        color: effectiveCardColor ?? defaultBg,
         borderRadius: BorderRadius.circular(effectiveRadius),
         border: Border.all(
           color: borderColor ?? defaultBorder,

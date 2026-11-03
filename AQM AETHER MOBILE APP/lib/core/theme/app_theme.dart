@@ -85,16 +85,16 @@ abstract class AppColors {
   static const Color accentMotion = Color(0xFF0D9488);      // Teal
   static const Color accentMotionLight = Color(0xFFF0FDFA);
 
-  // Dark Theme Aliases (Mapped to Clinical Slate White to prevent dark theme divergence)
-  static const Color darkBackground = Color(0xFFF4F6F9);
-  static const Color darkSurface = Color(0xFFFFFFFF);
-  static const Color darkElevated = Color(0xFFFFFFFF);
-  static const Color darkMuted = Color(0xFFF1F5F9);
-  static const Color darkBorder = Color(0xFFE2E8F0);
-  static const Color darkTextPrimary = Color(0xFF0F172A);
-  static const Color darkTextSecondary = Color(0xFF64748B);
-  static const Color darkPrimaryBlue = Color(0xFF2563EB);
-  static const Color darkAccentCyan = Color(0xFF2563EB);
+  // ── Dark Theme Surfaces & Typography (Dark Slate Mode) ─────────────────────
+  static const Color darkBackground = Color(0xFF0F172A);     // Deep Slate Canvas
+  static const Color darkSurface = Color(0xFF1E293B);        // Elevated Card Surface
+  static const Color darkElevated = Color(0xFF334155);       // Secondary Elevated
+  static const Color darkMuted = Color(0xFF1E293B);
+  static const Color darkBorder = Color(0xFF334155);         // Subtle Slate Border
+  static const Color darkTextPrimary = Color(0xFFF8FAFC);    // Crisp White Text
+  static const Color darkTextSecondary = Color(0xFF94A3B8);  // Slate Grey Muted Text
+  static const Color darkPrimaryBlue = Color(0xFF3B82F6);    // Cobalt Glow Accent
+  static const Color darkAccentCyan = Color(0xFF38BDF8);     // Cyan Highlight
 
   static const Color panelBackground = surface;
   static const Color chartGrid = Color(0xFFE2E8F0);
@@ -238,13 +238,97 @@ abstract class AppTheme {
     );
   }
 
-  // Preserve Clinical Slate White theme even if dark theme is requested
-  static ThemeData get darkTheme => lightTheme;
+  static ThemeData get darkTheme {
+    final textTheme = _buildTextTheme(isDark: true);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: GoogleFonts.googleSans().fontFamily,
+      scaffoldBackgroundColor: AppColors.darkBackground,
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.darkPrimaryBlue,
+        secondary: AppColors.darkPrimaryBlue,
+        tertiary: AppColors.darkAccentCyan,
+        surface: AppColors.darkSurface,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+        onSurface: AppColors.darkTextPrimary,
+        error: AppColors.error,
+      ),
+      textTheme: textTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.darkSurface,
+        foregroundColor: AppColors.darkTextPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        centerTitle: false,
+        titleTextStyle: GoogleFonts.googleSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.darkTextPrimary,
+          letterSpacing: -0.2,
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.darkBorder,
+        thickness: 1,
+        space: 0,
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.darkSurface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.darkPrimaryBlue,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.darkTextPrimary,
+          side: const BorderSide(color: AppColors.darkBorder),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.darkPrimaryBlue,
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 
   static TextTheme _buildTextTheme({required bool isDark}) {
-    const primaryColor = AppColors.textPrimary;
-    const secondaryColor = AppColors.textSecondary;
-    const mutedColor = AppColors.textMuted;
+    final primaryColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final secondaryColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final mutedColor = isDark ? AppColors.darkTextSecondary : AppColors.textMuted;
 
     return TextTheme(
       displayLarge: GoogleFonts.googleSans(

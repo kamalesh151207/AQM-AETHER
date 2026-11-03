@@ -95,8 +95,11 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.backgroundPrimary;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: Consumer3<DeviceProvider, MonitoringProvider, ThresholdService>(
           builder: (context, deviceProvider, monitoringProvider, thresholdService, _) {
@@ -169,28 +172,31 @@ class _AlertsScreenState extends State<AlertsScreen> {
     bool isConnected,
     ThresholdService thresholdService,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ALERT CENTER',
+                'AERION AQM',
                 style: TextStyle(
                   fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
                   letterSpacing: -0.5,
                 ),
               ),
-              SizedBox(height: 2),
+              const SizedBox(height: 2),
               Text(
-                'Threshold safety management & audio alarms',
+                'Alert Center & Safety Management',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,

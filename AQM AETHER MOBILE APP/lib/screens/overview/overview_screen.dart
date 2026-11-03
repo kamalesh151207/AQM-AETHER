@@ -200,7 +200,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AQM AETHER',
+                    'AERION AQM',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,

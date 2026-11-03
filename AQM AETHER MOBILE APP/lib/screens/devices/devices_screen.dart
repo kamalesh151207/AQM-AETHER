@@ -63,14 +63,28 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       color: isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Text(
-                  'DEVICE MANAGEMENT',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textColor,
-                    letterSpacing: 0.5,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'AERION AQM',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    Text(
+                      'Device Management',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

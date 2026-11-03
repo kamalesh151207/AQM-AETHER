@@ -20,11 +20,14 @@ class MotionScreen extends StatelessWidget {
         final dev = deviceProv.device;
         final isConnected = deviceProv.isConnected;
         final mpuFound = dev.mpuCharFound;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgColor = isDark ? AppColors.darkBackground : AppColors.backgroundPrimary;
+        final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundPrimary,
+          backgroundColor: bgColor,
           appBar: AppBar(
-            backgroundColor: AppColors.backgroundPrimary,
+            backgroundColor: bgColor,
             elevation: 0,
             title: Row(
               children: [
@@ -32,21 +35,35 @@ class MotionScreen extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.accentPrimary.withOpacity(0.12),
+                    color: (isDark ? AppColors.darkPrimaryBlue : AppColors.accentPrimary).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(Icons.screen_rotation_rounded,
-                      color: AppColors.accentPrimary, size: 18),
+                  child: Icon(Icons.screen_rotation_rounded,
+                      color: isDark ? AppColors.darkPrimaryBlue : AppColors.accentPrimary, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const Text(
-                  'MOTION TELEMETRY',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                    letterSpacing: 0.5,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'AERION AQM',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    Text(
+                      'Motion Telemetry',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

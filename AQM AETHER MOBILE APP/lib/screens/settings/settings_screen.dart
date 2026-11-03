@@ -236,20 +236,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'CONFIGURATION',
+          'AERION AQM',
           style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             color: titleColor,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
-          'Hardware parameters, BLE permissions, alarms & storage',
+        Text(
+          'System Configuration & Settings',
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1427,7 +1427,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'AQM AETHER',
+                    'AERION AQM',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -1448,7 +1448,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: AppSpacing.md),
           const Text(
-            'AQM AETHER is an IoT environmental monitoring platform interfacing with ESP32 microcontrollers via Bluetooth Low Energy to provide real-time telemetry, threshold alerts, and persistent historical tracking.',
+            'AERION AQM is an IoT environmental monitoring platform interfacing with ESP32 microcontrollers via Bluetooth Low Energy to provide real-time telemetry, threshold alerts, and persistent historical tracking.',
             style: TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,
