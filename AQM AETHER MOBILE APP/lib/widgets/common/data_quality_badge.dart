@@ -1,4 +1,4 @@
-// AQM AETHER — Data Quality Telemetry Badge
+// AQM AETHER — Data Quality Telemetry Badge (AETHER GRAPHITE Theme)
 
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
@@ -22,19 +22,6 @@ class DataQualityBadge extends StatelessWidget {
     }
   }
 
-  Color get _bgColor {
-    switch (quality) {
-      case DataQuality.fresh:
-        return AppColors.successLight;
-      case DataQuality.delayed:
-        return AppColors.warningLight;
-      case DataQuality.stale:
-        return AppColors.criticalLight;
-      case DataQuality.unavailable:
-        return AppColors.elevatedSurface;
-    }
-  }
-
   IconData get _icon {
     switch (quality) {
       case DataQuality.fresh:
@@ -50,24 +37,28 @@ class DataQualityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = _color;
+    final bgColor = isDark ? color.withOpacity(0.15) : color.withOpacity(0.10);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: _bgColor,
+        color: bgColor,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: _color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_icon, size: 10, color: _color),
+          Icon(_icon, size: 12, color: color),
           const SizedBox(width: 4),
           Text(
-            quality.label,
+            quality.label.toUpperCase(),
             style: TextStyle(
               fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: _color,
+              fontWeight: FontWeight.w700,
+              color: color,
               letterSpacing: 0.3,
             ),
           ),
@@ -76,4 +67,3 @@ class DataQualityBadge extends StatelessWidget {
     );
   }
 }
-

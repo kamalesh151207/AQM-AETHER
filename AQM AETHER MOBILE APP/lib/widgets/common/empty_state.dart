@@ -1,4 +1,4 @@
-// AQM AETHER — Reusable Empty State Widget
+// AQM AETHER — Reusable Empty State Widget (Light & Dark Adaptive)
 
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
@@ -19,6 +19,8 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -28,16 +30,16 @@ class EmptyState extends StatelessWidget {
             Icon(
               icon,
               size: 48,
-              color: AppColors.textMuted,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                 letterSpacing: -0.1,
               ),
             ),
@@ -46,10 +48,10 @@ class EmptyState extends StatelessWidget {
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   height: 1.5,
                 ),
               ),

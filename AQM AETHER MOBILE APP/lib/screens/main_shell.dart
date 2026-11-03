@@ -101,7 +101,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF0B131D) : const Color(0xFFF4F7FA);
+    final bgColor = isDark ? AppColors.darkBackground : AppColors.backgroundPrimary;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -146,8 +146,8 @@ class _AqmBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final navBg = isDark ? const Color(0xFF131F2E) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF22354B) : const Color(0xFFE5EAF0);
+    final navBg = isDark ? AppColors.darkSurface : AppColors.cardBackground;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.border;
 
     return Container(
       decoration: BoxDecoration(
@@ -155,13 +155,7 @@ class _AqmBottomNavBar extends StatelessWidget {
         border: Border(
           top: BorderSide(color: borderColor, width: 1),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? const Color(0x33000000) : const Color(0x08000000),
-            offset: const Offset(0, -3),
-            blurRadius: 8,
-          ),
-        ],
+        boxShadow: isDark ? const [] : AppShadows.card,
       ),
       child: SafeArea(
         top: false,
@@ -200,11 +194,11 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = isDark ? const Color(0xFF60A5FA) : const Color(0xFF173B57);
-    final inactiveColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF667085);
+    final activeColor = isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy;
+    final inactiveColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
     final pillBg = isDark
-        ? (isSelected ? const Color(0xFF1E3A5F) : Colors.transparent)
-        : (isSelected ? const Color(0xFFEDF4FB) : Colors.transparent);
+        ? (isSelected ? AppColors.darkElevated : Colors.transparent)
+        : (isSelected ? AppColors.mutedBackground : Colors.transparent);
 
     return GestureDetector(
       onTap: onTap,

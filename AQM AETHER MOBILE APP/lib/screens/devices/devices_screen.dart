@@ -41,11 +41,14 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
         final isConnected = provider.isConnected;
         final isScanning = provider.isScanning;
         final currentDev = provider.device;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final bgColor = isDark ? AppColors.darkBackground : AppColors.backgroundPrimary;
+        final textColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundPrimary,
+          backgroundColor: bgColor,
           appBar: AppBar(
-            backgroundColor: AppColors.backgroundPrimary,
+            backgroundColor: bgColor,
             elevation: 0,
             title: Row(
               children: [
@@ -53,19 +56,19 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.accentPrimary.withOpacity(0.12),
+                    color: (isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(Icons.bluetooth_searching_rounded,
-                      color: AppColors.accentPrimary, size: 18),
+                  child: Icon(Icons.bluetooth_searching_rounded,
+                      color: isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                const Text(
+                Text(
                   'BLE DEVICE LAB',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: textColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -349,6 +352,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
 
   Widget _buildScanControlBar(BuildContext context, DeviceProvider provider) {
     final isScanning = provider.isScanning;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
@@ -378,7 +382,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isScanning ? AppColors.critical : AppColors.accentPrimary,
+                  backgroundColor: isScanning ? AppColors.critical : AppColors.primaryNavy,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   elevation: 0,
@@ -405,9 +409,9 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
+                foregroundColor: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                side: const BorderSide(color: AppColors.borderMedium),
+                side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.borderMedium),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
@@ -431,14 +435,14 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
         Container(
           height: 38,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
           ),
           child: TextField(
             controller: _searchController,
             onChanged: (val) => provider.searchQuery = val,
-            style: const TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: 12, color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Filter by device name or MAC address…',
               hintStyle: const TextStyle(
@@ -655,7 +659,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       provider.connect(result.device, isAqm: isAqm);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isAqm ? AppColors.accentPrimary : const Color(0xFF1B365D),
+                      backgroundColor: isAqm ? AppColors.primaryNavy : AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
@@ -733,12 +737,13 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
     required String subtitle,
     VoidCallback? onRetry,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg, horizontal: AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant.withOpacity(0.5),
+        color: isDark ? AppColors.darkSurface : AppColors.mutedBackground.withOpacity(0.6),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.borderSubtle),
+        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.borderSubtle),
       ),
       child: Column(
         children: [

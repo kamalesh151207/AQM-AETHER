@@ -1,86 +1,98 @@
-// AQM AETHER — Industrial IoT Design System & Typography Engine
-// Unified Palette: Deep Petrol Navy #173B57, Cobalt #2563EB, Google Sans
+// AQM AETHER — AETHER GRAPHITE – PRECISION IoT Design System
+// Colors: Primary Navy #142B45, Primary Blue #3478F6, Accent Cyan #16B8C4,
+// Background #F3F6FA, Card #FFFFFF, Text #172536 / #718096, Border #E3EAF2,
+// Success #19A875, Warning #E5A23B, Error #E05252, Muted #EAF0F7
+// Typography: Google Sans (Global)
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 abstract class AppColors {
-  // ── Primary Palette Specification ──────────────────────────────────────────
-  static const Color primary = Color(0xFF173B57);          // Deep Petrol Navy #173B57
-  static const Color primaryLight = Color(0xFFEBF1F7);
-  static const Color primaryHover = Color(0xFF204B6E);
-  static const Color primaryDark = Color(0xFF0F2639);
+  // ── AETHER GRAPHITE – PRECISION IoT Color Specification ────────────────────
+  static const Color primaryNavy = Color(0xFF142B45);       // PRIMARY NAVY: #142B45
+  static const Color primary = Color(0xFF142B45);
+  static const Color primaryLight = Color(0xFFEAF0F7);
+  static const Color primaryHover = Color(0xFF1B3757);
+  static const Color primaryDark = Color(0xFF0C1B2C);
 
-  static const Color secondary = Color(0xFF2563EB);        // Cobalt Blue #2563EB
-  static const Color secondaryLight = Color(0xFFEFF6FF);
-  static const Color secondaryHover = Color(0xFF1D4ED8);
+  static const Color primaryBlue = Color(0xFF3478F6);       // PRIMARY BLUE: #3478F6
+  static const Color secondary = Color(0xFF3478F6);
+  static const Color secondaryLight = Color(0xFFEFF5FF);
+  static const Color secondaryHover = Color(0xFF2563EB);
+
+  static const Color accentCyan = Color(0xFF16B8C4);        // ACCENT CYAN: #16B8C4
+  static const Color accentCyanLight = Color(0xFFE6F9FB);
 
   // ── Light Theme Surfaces ──────────────────────────────────────────────────
-  static const Color backgroundPrimary = Color(0xFFF4F7FA); // #F4F7FA
+  static const Color backgroundPrimary = Color(0xFFF3F6FA); // PRIMARY BACKGROUND: #F3F6FA
   static const Color backgroundSecondary = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color cardBackground = Color(0xFFFFFFFF);
-  static const Color elevatedSurface = Color(0xFFF8FAFD);
+  static const Color cardBackground = Color(0xFFFFFFFF);    // CARD BACKGROUND: #FFFFFF
+  static const Color elevatedSurface = Color(0xFFFFFFFF);
+  static const Color mutedBackground = Color(0xFFEAF0F7);   // MUTED BACKGROUND: #EAF0F7
+  static const Color surfaceVariant = Color(0xFFEAF0F7);
 
   // ── Light Theme Typography ────────────────────────────────────────────────
-  static const Color textPrimary = Color(0xFF172033);       // #172033
-  static const Color textSecondary = Color(0xFF667085);     // #667085
-  static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textPrimary = Color(0xFF172536);       // PRIMARY TEXT: #172536
+  static const Color textSecondary = Color(0xFF718096);     // SECONDARY TEXT: #718096
+  static const Color textMuted = Color(0xFF8C9BAE);
 
   // ── Status & Telemetry ────────────────────────────────────────────────────
-  static const Color success = Color(0xFF16A36A);           // #16A36A
-  static const Color successLight = Color(0xFFF0FDF5);
-  static const Color normal = Color(0xFF16A36A);
-  static const Color normalLight = Color(0xFFF0FDF5);
+  static const Color success = Color(0xFF19A875);           // SUCCESS: #19A875
+  static const Color normal = Color(0xFF19A875);
+  static const Color successLight = Color(0xFFE8F7F1);
+  static const Color normalLight = Color(0xFFE8F7F1);
 
-  static const Color warning = Color(0xFFE6A23C);           // #E6A23C
-  static const Color warningLight = Color(0xFFFFFBEB);
+  static const Color warning = Color(0xFFE5A23B);           // WARNING: #E5A23B
+  static const Color warningLight = Color(0xFFFDF6EC);
 
-  static const Color critical = Color(0xFFDC4C4C);          // #DC4C4C
-  static const Color criticalLight = Color(0xFFFEF2F2);
-  static const Color error = Color(0xFFDC4C4C);
+  static const Color error = Color(0xFFE05252);             // ERROR: #E05252
+  static const Color critical = Color(0xFFE05252);
+  static const Color criticalLight = Color(0xFFFDEEEE);
 
-  static const Color border = Color(0xFFE5EAF0);            // #E5EAF0
-  static const Color borderSubtle = Color(0xFFF1F5F9);
-  static const Color borderMedium = Color(0xFFD1D8E2);
-  static const Color borderFocus = Color(0xFF2563EB);
+  static const Color border = Color(0xFFE3EAF2);            // BORDER: #E3EAF2
+  static const Color borderSubtle = Color(0xFFEDF2F7);
+  static const Color borderMedium = Color(0xFFCBD5E1);
+  static const Color borderFocus = Color(0xFF3478F6);
 
   // ── Sensor Semantic Accents ───────────────────────────────────────────────
   static const Color accentTemperature = Color(0xFFEA580C); // Warm Orange
   static const Color accentTemperatureLight = Color(0xFFFFF7ED);
 
-  static const Color accentHumidity = Color(0xFF0284C7);    // Precision Sky Blue
-  static const Color accentHumidityLight = Color(0xFFF0F9FF);
+  static const Color accentHumidity = Color(0xFF16B8C4);    // Accent Cyan #16B8C4
+  static const Color accentHumidityLight = Color(0xFFE6F9FB);
 
-  static const Color accentGas = Color(0xFF7C3AED);         // Violet / Purple
+  static const Color accentGas = Color(0xFF7C3AED);         // Precision Violet
   static const Color accentGasLight = Color(0xFFF5F3FF);
 
-  static const Color accentMotion = Color(0xFF0D9488);      // Teal
+  static const Color accentMotion = Color(0xFF0D9488);      // Precision Teal
   static const Color accentMotionLight = Color(0xFFF0FDFA);
 
-  // ── Dark Theme Surfaces & Typography ──────────────────────────────────────
-  static const Color darkBackground = Color(0xFF0B131D);
-  static const Color darkSurface = Color(0xFF131F2E);
-  static const Color darkElevated = Color(0xFF1A2A3D);
-  static const Color darkBorder = Color(0xFF22354B);
+  // ── Dark Theme Surfaces & Typography (AETHER GRAPHITE Dark) ────────────────
+  static const Color darkBackground = Color(0xFF0B121C);     // Deep Graphite Slate
+  static const Color darkSurface = Color(0xFF131F2E);        // Graphite Card Surface
+  static const Color darkElevated = Color(0xFF1A283B);
+  static const Color darkMuted = Color(0xFF111B28);
+  static const Color darkBorder = Color(0xFF203247);         // Refined Graphite Border
   static const Color darkTextPrimary = Color(0xFFF1F5F9);
-  static const Color darkTextSecondary = Color(0xFF94A3B8);
+  static const Color darkTextSecondary = Color(0xFF8A99AD);
+  static const Color darkPrimaryBlue = Color(0xFF5B96F8);
+  static const Color darkAccentCyan = Color(0xFF22D3EE);
 
   // Compatibility Aliases
-  static const Color navyPrimary = primary;
+  static const Color navyPrimary = primaryNavy;
   static const Color navyLight = primaryLight;
   static const Color navyHover = primaryHover;
   static const Color navyPressed = primaryDark;
   static const Color navyBorder = primaryHover;
-  static const Color accentPrimary = primary;
+  static const Color accentPrimary = primaryNavy;
   static const Color accentPrimaryLight = primaryLight;
-  static const Color accentSecondary = secondary;
+  static const Color accentSecondary = primaryBlue;
   static const Color accentSecondaryLight = secondaryLight;
-  static const Color accentAnalytics = secondary;
+  static const Color accentAnalytics = primaryBlue;
   static const Color accentAnalyticsLight = secondaryLight;
   static const Color connection = success;
   static const Color connectionLight = successLight;
-  static const Color surfaceVariant = Color(0xFFEDF2F7);
   static const Color panelBackground = surface;
   static const Color chartGrid = border;
   static const Color chartTooltipBg = textPrimary;
@@ -107,38 +119,32 @@ abstract class AppRadius {
 }
 
 abstract class AppShadows {
+  // Subtle refined shadows for clean scientific precision
   static const List<BoxShadow> card = [
     BoxShadow(
-      color: Color(0x06173B57),
+      color: Color(0x05142B45),
       offset: Offset(0, 1),
       blurRadius: 3,
       spreadRadius: 0,
     ),
     BoxShadow(
-      color: Color(0x05173B57),
-      offset: Offset(0, 4),
-      blurRadius: 10,
+      color: Color(0x04142B45),
+      offset: Offset(0, 3),
+      blurRadius: 8,
       spreadRadius: 0,
     ),
   ];
 
   static const List<BoxShadow> elevated = [
     BoxShadow(
-      color: Color(0x0C173B57),
+      color: Color(0x0A142B45),
       offset: Offset(0, 4),
-      blurRadius: 16,
-      spreadRadius: -2,
+      blurRadius: 12,
+      spreadRadius: -1,
     ),
   ];
 
-  static const List<BoxShadow> darkCard = [
-    BoxShadow(
-      color: Color(0x30000000),
-      offset: Offset(0, 2),
-      blurRadius: 8,
-      spreadRadius: 0,
-    ),
-  ];
+  static const List<BoxShadow> darkCard = [];
 }
 
 abstract class AppTheme {
@@ -150,13 +156,14 @@ abstract class AppTheme {
       fontFamily: GoogleFonts.googleSans().fontFamily,
       scaffoldBackgroundColor: AppColors.backgroundPrimary,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primary,
-        secondary: AppColors.secondary,
+        primary: AppColors.primaryNavy,
+        secondary: AppColors.primaryBlue,
+        tertiary: AppColors.accentCyan,
         surface: AppColors.surface,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.textPrimary,
-        error: AppColors.critical,
+        error: AppColors.error,
       ),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
@@ -187,7 +194,7 @@ abstract class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primaryNavy,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -195,7 +202,7 @@ abstract class AppTheme {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: GoogleFonts.googleSans(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
@@ -203,14 +210,14 @@ abstract class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: AppColors.primaryNavy,
           side: const BorderSide(color: AppColors.border),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: GoogleFonts.googleSans(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
@@ -218,9 +225,9 @@ abstract class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.secondary,
+          foregroundColor: AppColors.primaryBlue,
           textStyle: GoogleFonts.googleSans(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -236,13 +243,13 @@ abstract class AppTheme {
       fontFamily: GoogleFonts.googleSans().fontFamily,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.secondary,
-        secondary: AppColors.secondaryLight,
+        primary: AppColors.darkPrimaryBlue,
+        secondary: AppColors.accentCyan,
         surface: AppColors.darkSurface,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: AppColors.darkTextPrimary,
-        error: AppColors.critical,
+        error: AppColors.error,
       ),
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
@@ -273,7 +280,7 @@ abstract class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.secondary,
+          backgroundColor: AppColors.primaryBlue,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -281,9 +288,33 @@ abstract class AppTheme {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           textStyle: GoogleFonts.googleSans(
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.darkTextPrimary,
+          side: const BorderSide(color: AppColors.darkBorder),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.darkPrimaryBlue,
+          textStyle: GoogleFonts.googleSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -293,7 +324,7 @@ abstract class AppTheme {
   static TextTheme _buildTextTheme({required bool isDark}) {
     final primaryColor = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
     final secondaryColor = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
-    final mutedColor = isDark ? const Color(0xFF64748B) : AppColors.textMuted;
+    final mutedColor = isDark ? const Color(0xFF6B7C93) : AppColors.textMuted;
 
     return TextTheme(
       displayLarge: GoogleFonts.googleSans(
@@ -376,7 +407,7 @@ abstract class AppTheme {
         height: 1.45,
       ),
       labelLarge: GoogleFonts.googleSans(
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         color: primaryColor,
         letterSpacing: 0.2,

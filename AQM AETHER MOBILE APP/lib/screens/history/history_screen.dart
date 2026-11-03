@@ -144,17 +144,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
         final filtered = _applyFilter(allReadings);
 
         return Scaffold(
+          backgroundColor: isDark ? AppColors.darkBackground : AppColors.backgroundPrimary,
           appBar: AppBar(
+            backgroundColor: isDark ? AppColors.darkSurface : AppColors.cardBackground,
             title: Row(
               children: [
                 Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
+                    color: (isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
-                  child: const Icon(Icons.history_rounded, color: AppColors.primary, size: 18),
+                  child: Icon(Icons.history_rounded, color: isDark ? AppColors.darkPrimaryBlue : AppColors.primaryNavy, size: 18),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 const Text(
@@ -195,7 +197,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: Container(
                         height: 40,
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkSurface : Colors.white,
+                          color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: isDark ? AppColors.darkBorder : AppColors.border,
@@ -231,7 +233,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkSurface : Colors.white,
+                        color: isDark ? AppColors.darkSurface : AppColors.cardBackground,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.border),
                       ),
@@ -249,11 +251,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base, vertical: 4),
                 child: Row(
                   children: [
-                    _buildFilterChip('All Records', 'all'),
+                    _buildFilterChip('All Records', 'all', isDark),
                     const SizedBox(width: AppSpacing.xs),
-                    _buildFilterChip('Alerts Only', 'alerts'),
+                    _buildFilterChip('Alerts Only', 'alerts', isDark),
                     const SizedBox(width: AppSpacing.xs),
-                    _buildFilterChip('Normal', 'normal'),
+                    _buildFilterChip('Normal', 'normal', isDark),
                   ],
                 ),
               ),
@@ -286,7 +288,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, String type) {
+  Widget _buildFilterChip(String label, String type, bool isDark) {
     final isSelected = _filterType == type;
     return InkWell(
       onTap: () => setState(() => _filterType = type),
@@ -294,10 +296,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.transparent,
+          color: isSelected ? AppColors.primaryNavy : (isDark ? AppColors.darkSurface : AppColors.mutedBackground),
           borderRadius: BorderRadius.circular(AppRadius.full),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? AppColors.primaryNavy : (isDark ? AppColors.darkBorder : AppColors.border),
           ),
         ),
         child: Text(
@@ -305,7 +307,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? Colors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
           ),
         ),
       ),

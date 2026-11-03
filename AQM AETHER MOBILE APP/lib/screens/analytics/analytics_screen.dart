@@ -87,7 +87,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.backgroundPrimary,
       body: SafeArea(
         child: Consumer<MonitoringProvider>(
           builder: (context, monitoringProvider, _) {
@@ -100,11 +103,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               ),
               children: [
                 // Header
-                _buildHeader(context, monitoringProvider),
+                _buildHeader(context, monitoringProvider, isDark),
                 const SizedBox(height: AppSpacing.base),
 
                 // Time Range Selector (1h, 6h, 24h, 7d)
-                _buildRangeSelector(),
+                _buildRangeSelector(isDark),
                 const SizedBox(height: AppSpacing.base),
 
                 if (readings.isEmpty)
@@ -119,7 +122,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   const SizedBox(height: AppSpacing.base),
 
                   // Sensor Metric Switcher for Chart
-                  _buildMetricSelector(),
+                  _buildMetricSelector(isDark),
                   const SizedBox(height: AppSpacing.md),
 
                   // Interactive Chart
@@ -138,11 +141,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, MonitoringProvider provider) {
+  Widget _buildHeader(BuildContext context, MonitoringProvider provider, bool isDark) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -151,12 +154,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                   letterSpacing: -0.4,
                 ),
               ),
-              SizedBox(height: 2),
-              Text(
+              const SizedBox(height: 2),
+              const Text(
                 'Sensor telemetry statistics & historical analysis',
                 style: TextStyle(
                   fontSize: 12,
@@ -178,7 +181,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildRangeSelector() {
+  Widget _buildRangeSelector(bool isDark) {
     return Row(
       children: AnalyticsRange.values.map((range) {
         final isSelected = _selectedRange == range;
@@ -191,10 +194,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  color: isSelected ? AppColors.primaryNavy : (isDark ? AppColors.darkSurface : AppColors.cardBackground),
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
-                    color: isSelected ? AppColors.primary : AppColors.border,
+                    color: isSelected ? AppColors.primaryNavy : (isDark ? AppColors.darkBorder : AppColors.border),
                   ),
                 ),
                 alignment: Alignment.center,
@@ -203,7 +206,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    color: isSelected ? Colors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                   ),
                 ),
               ),
@@ -214,7 +217,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildMetricSelector() {
+  Widget _buildMetricSelector(bool isDark) {
     return Row(
       children: SelectedMetric.values.map((metric) {
         final isSelected = _selectedMetric == metric;
@@ -227,15 +230,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected ? Colors.white : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
                 ),
               ),
               selected: isSelected,
               selectedColor: metric.color,
-              backgroundColor: Colors.transparent,
+              backgroundColor: isDark ? AppColors.darkSurface : AppColors.mutedBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                side: BorderSide(color: isSelected ? metric.color : AppColors.border),
+                side: BorderSide(color: isSelected ? metric.color : (isDark ? AppColors.darkBorder : AppColors.border)),
               ),
               onSelected: (_) => setState(() => _selectedMetric = metric),
             ),
