@@ -75,6 +75,66 @@ void main() {
       expect(AppUtils.escapeCsv('Line1\nLine2'), equals('"Line1\nLine2"'));
       expect(AppUtils.escapeCsv(null), equals(''));
     });
+
+    test('parses Device ID ASCII payload safely', () {
+      final bytes = 'AQM-KAM-001'.codeUnits;
+      expect(AppUtils.parseStringPayload(bytes), equals('AQM-KAM-001'));
+      expect(AppUtils.parseStringPayload('  AQM-ARU-002\x00 '.codeUnits), equals('AQM-ARU-002'));
+      expect(AppUtils.parseStringPayload(null), isNull);
+      expect(AppUtils.parseStringPayload([]), isNull);
+    });
+
+    test('normalizes and validates unique AQM Device IDs', () {
+      expect(AppUtils.normalizeDeviceId('  aqm-kam-001  '), equals('AQM-KAM-001'));
+      expect(AppUtils.isValidDeviceId('AQM-KAM-001'), isTrue);
+      expect(AppUtils.isValidDeviceId('AQM-ARU-002'), isTrue);
+      expect(AppUtils.isValidDeviceId('AQM-RAH-003'), isTrue);
+      expect(AppUtils.isValidDeviceId('ESP32_01'), isTrue);
+
+      // Invalid formats
+      expect(AppUtils.isValidDeviceId(''), isFalse);
+      expect(AppUtils.isValidDeviceId('AB'), isFalse); // too short
+      expect(AppUtils.isValidDeviceId('AQM@#\$%'), isFalse); // invalid characters
+    });
+
+    test('matches device identity against advertised and characteristic data', () {
+      // Characteristic value match
+      expect(
+        AppUtils.matchesDeviceIdentity(
+          targetId: 'AQM-KAM-001',
+          readCharacteristicValue: 'AQM-KAM-001',
+        ),
+        isTrue,
+      );
+
+      // Advertised name match
+      expect(
+        AppUtils.matchesDeviceIdentity(
+          targetId: 'AQM-KAM-001',
+          advertisedName: 'AQM-KAM-001-DEV',
+        ),
+        isTrue,
+      );
+
+      // Manufacturer data match
+      expect(
+        AppUtils.matchesDeviceIdentity(
+          targetId: 'AQM-KAM-001',
+          manufacturerData: 'ID:AQM-KAM-001',
+        ),
+        isTrue,
+      );
+
+      // Non-matching identity
+      expect(
+        AppUtils.matchesDeviceIdentity(
+          targetId: 'AQM-KAM-001',
+          advertisedName: 'AQM-ARU-002',
+          readCharacteristicValue: 'AQM-RAH-003',
+        ),
+        isFalse,
+      );
+    });
   });
 
   group('DeviceConnectionStatus - State Machine', () {

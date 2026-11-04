@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import '../../core/constants/ble_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/device_model.dart';
 import '../../providers/device_provider.dart';
@@ -20,13 +21,27 @@ class DevicesScreen extends StatefulWidget {
 
 class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveClientMixin {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _deviceIdController = TextEditingController();
 
   @override
   bool get wantKeepAlive => true;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final prov = context.read<DeviceProvider>();
+      if (prov.savedDeviceId != null && prov.savedDeviceId!.isNotEmpty) {
+        _deviceIdController.text = prov.savedDeviceId!;
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _deviceIdController.dispose();
     super.dispose();
   }
 
@@ -127,7 +142,11 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
               _buildActiveStatusCard(context, provider),
               const SizedBox(height: AppSpacing.md),
 
-              // 3. Scan Control Toolbar & Search Filter
+              // 3. Unique AQM Device Identification & Verification
+              _buildDeviceIdCard(context, provider),
+              const SizedBox(height: AppSpacing.md),
+
+              // 4. Scan Control Toolbar & Search Filter
               _buildScanControlBar(context, provider),
               const SizedBox(height: AppSpacing.md),
 
@@ -314,7 +333,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
               children: [
                 Expanded(
                   child: Text(
-                    'Connected to: ${dev.name} [${dev.id ?? "--"}]',
+                    'Connected to: ${dev.name}${dev.deviceId != null ? " [ID: ${dev.deviceId}]" : " [${dev.id ?? "--"}]"}',
                     style: const TextStyle(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
@@ -354,6 +373,361 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 style: TextButton.styleFrom(foregroundColor: AppColors.accentPrimary),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Unique AQM Device ID Input & Discovery ─────────────────────────────────
+
+  Widget _buildDeviceIdCard(BuildContext context, DeviceProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isFinding = provider.isFindingDevice;
+    final isConnected = provider.isConnected;
+    final matchedResult = provider.matchedDeviceResult;
+    final searchError = provider.deviceSearchError;
+    final findingStatus = provider.findingDeviceStatus;
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.cardBackground;
+    final borderCol = isDark ? AppColors.darkBorder : AppColors.border;
+    final textCol = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final subTextCol = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+    return AppCard(
+      color: cardBg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: const Icon(Icons.fingerprint_rounded, color: AppColors.primary, size: 18),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'DEVICE IDENTIFICATION',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: textCol,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'Connect using your unique AQM ESP32 Device ID',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: subTextCol,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (provider.hasSavedDevice)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bookmark_rounded, size: 10, color: AppColors.primary),
+                      SizedBox(width: 3),
+                      Text(
+                        'SAVED ID',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // ID Input Field
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.darkBackground : AppColors.backgroundPrimary,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(color: borderCol),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                  child: Row(
+                    children: [
+                      Icon(Icons.badge_outlined, size: 16, color: subTextCol),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: TextField(
+                          controller: _deviceIdController,
+                          textCapitalization: TextCapitalization.characters,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                            color: textCol,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Enter Device ID (e.g. AQM-KAM-001)',
+                            hintStyle: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          onSubmitted: (val) {
+                            if (!isFinding) {
+                              HapticFeedback.lightImpact();
+                              provider.findMyDevice(val);
+                            }
+                          },
+                        ),
+                      ),
+                      if (_deviceIdController.text.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            _deviceIdController.clear();
+                            provider.clearMatchedDevice();
+                            setState(() {});
+                          },
+                          child: Icon(Icons.clear_rounded, size: 16, color: subTextCol),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              ElevatedButton.icon(
+                onPressed: isFinding
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        FocusScope.of(context).unfocus();
+                        provider.findMyDevice(_deviceIdController.text);
+                      },
+                icon: isFinding
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.search_rounded, size: 16),
+                label: Text(
+                  isFinding ? 'SEARCHING…' : 'FIND MY DEVICE',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Finding Progress Status
+          if (isFinding && findingStatus != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.5, valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary)),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    findingStatus,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // Search Error Banner
+          if (searchError != null && !isFinding) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.critical.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                border: Border.all(color: AppColors.critical.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.critical),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      searchError,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.critical,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Matched Device Result Card
+          if (matchedResult != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.normal.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.normal.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.normal.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.verified_rounded, size: 12, color: AppColors.normal),
+                            SizedBox(width: 4),
+                            Text(
+                              'DEVICE FOUND & VERIFIED',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildRssiBadge(matchedResult.rssi),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.normal.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                        ),
+                        child: const Icon(Icons.developer_board_rounded, color: AppColors.normal, size: 20),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              provider.matchedDeviceName ?? BleConstants.deviceName,
+                              style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: textCol,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Device ID: ',
+                                  style: TextStyle(fontSize: 10.5, color: subTextCol),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                                  ),
+                                  child: Text(
+                                    provider.matchedDeviceId ?? _deviceIdController.text,
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: isConnected
+                            ? null
+                            : () {
+                                HapticFeedback.lightImpact();
+                                provider.connectMatchedDevice();
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isConnected ? AppColors.normal : AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        child: Text(
+                          isConnected ? 'CONNECTED' : 'CONNECT',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

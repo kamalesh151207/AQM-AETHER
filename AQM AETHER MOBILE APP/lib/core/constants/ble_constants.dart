@@ -3,6 +3,7 @@
 abstract class BleConstants {
   // Device Identity
   static const String deviceName = 'AQM-Kamalesh';
+  static const String defaultDeviceId = 'AQM-KAM-001';
 
   // Service UUID
   static const String serviceUuid = '12345678-1234-1234-1234-123456789001';
@@ -15,6 +16,15 @@ abstract class BleConstants {
 
   // Gas Sensor (MQ-135) Characteristic UUID
   static const String gasUuid = '12345678-1234-1234-1234-123456789006';
+
+  // Unique AQM Device Identity Characteristic UUID
+  static const String deviceIdUuid = '12345678-1234-1234-1234-123456789007';
+
+  // Local Storage Preference Keys for Remembered Device
+  static const String prefLastDeviceId = 'aqm_last_connected_device_id';
+  static const String prefLastDeviceName = 'aqm_last_connected_device_name';
+  static const String prefLastRemoteId = 'aqm_last_connected_remote_id';
+  static const String prefLastConnectedTime = 'aqm_last_connected_timestamp';
 
   // MPU6050 Accelerometer & Gyroscope Characteristic UUIDs
   static const String accelXUuid = '12345678-1234-1234-1234-123456789007';

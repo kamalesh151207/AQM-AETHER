@@ -37,6 +37,8 @@ FEATURES:
 // ========================================================
 
 #define DEVICE_NAME "AQM-Kamalesh"
+// Unique AQM Device ID (e.g. AQM-KAM-001, AQM-ARU-002, AQM-RAH-003)
+#define DEVICE_ID   "AQM-KAM-001"
 
 #define DHT_PIN 4
 #define DHT_TYPE DHT11
@@ -77,6 +79,10 @@ FEATURES:
 #define GAS_UUID \
 "12345678-1234-1234-1234-123456789006"
 
+// Characteristic for Unique Device ID Verification
+#define DEVICE_ID_UUID \
+"12345678-1234-1234-1234-123456789007"
+
 // ========================================================
 // 3. OBJECTS
 // ========================================================
@@ -91,6 +97,7 @@ BLECharacteristic* pHumidityCharacteristic = nullptr;
 BLECharacteristic* pIntervalCharacteristic = nullptr;
 BLECharacteristic* pAlertCharacteristic = nullptr;
 BLECharacteristic* pGasCharacteristic = nullptr;
+BLECharacteristic* pDeviceIdCharacteristic = nullptr;
 
 // ========================================================
 // 4. GLOBAL VARIABLES
@@ -323,6 +330,21 @@ void initializeBLE() {
     );
 
     // --------------------------------
+    // DEVICE IDENTITY CHARACTERISTIC
+    // --------------------------------
+
+    pDeviceIdCharacteristic =
+        pService->createCharacteristic(
+            DEVICE_ID_UUID,
+            BLECharacteristic::PROPERTY_READ |
+            BLECharacteristic::PROPERTY_NOTIFY
+        );
+
+    pDeviceIdCharacteristic->addDescriptor(
+        new BLE2902()
+    );
+
+    // --------------------------------
     // INITIAL VALUES
     // --------------------------------
 
@@ -335,6 +357,8 @@ void initializeBLE() {
     pAlertCharacteristic->setValue("NORMAL");
 
     pGasCharacteristic->setValue("0");
+
+    pDeviceIdCharacteristic->setValue(DEVICE_ID);
 
     // --------------------------------
     // START SERVICE
@@ -364,6 +388,9 @@ void initializeBLE() {
 
     scanResponseData.setName(DEVICE_NAME);
 
+    // Broadcast Device ID in manufacturer data for fast BLE discovery
+    scanResponseData.setManufacturerData(DEVICE_ID);
+
     // Apply advertising data
 
     pAdvertising->setAdvertisementData(
@@ -388,6 +415,14 @@ void initializeBLE() {
     Serial.print("Device Name: ");
 
     Serial.println(DEVICE_NAME);
+
+    Serial.print("Device ID: ");
+
+    Serial.println(DEVICE_ID);
+
+    Serial.print("Identity UUID: ");
+
+    Serial.println(DEVICE_ID_UUID);
 
     Serial.print("Service UUID: ");
 

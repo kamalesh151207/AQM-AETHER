@@ -6,8 +6,10 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:collection/collection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/ble_constants.dart';
+import '../core/utils/app_utils.dart';
 import '../models/device_model.dart';
 import '../models/monitoring_event.dart';
 import '../services/ble_service.dart';
@@ -43,6 +45,21 @@ class DeviceProvider extends ChangeNotifier {
   bool _isBluetoothOn = true;
   StreamSubscription<BluetoothAdapterState>? _adapterSubscription;
 
+  // Unique AQM Device Identification & Verification State
+  String _targetDeviceId = '';
+  ScanResult? _matchedDeviceResult;
+  String? _matchedDeviceId;
+  String? _matchedDeviceName;
+  bool _isFindingDevice = false;
+  String? _findingDeviceStatus;
+  String? _deviceSearchError;
+
+  // Local Storage for Remembered Device
+  String? _savedDeviceId;
+  String? _savedDeviceName;
+  String? _savedRemoteId;
+  DateTime? _savedConnectedTimestamp;
+
   // Diagnostics log stream
   final List<String> _diagnosticsLog = [];
 
@@ -60,6 +77,7 @@ class DeviceProvider extends ChangeNotifier {
     _setupBleCallbacks();
     _initBluetoothState();
     _startFreshnessTimer();
+    loadSavedDevice();
   }
 
   void _initBluetoothState() {
@@ -84,6 +102,27 @@ class DeviceProvider extends ChangeNotifier {
   double? get humidity => _humidity;
   DateTime? get lastTempUpdate => _lastTempUpdate;
   DateTime? get lastHumidityUpdate => _lastHumidityUpdate;
+
+  // Unique AQM Device Identification & Verification
+  String get targetDeviceId => _targetDeviceId;
+  set targetDeviceId(String id) {
+    _targetDeviceId = AppUtils.normalizeDeviceId(id);
+    notifyListeners();
+  }
+
+  ScanResult? get matchedDeviceResult => _matchedDeviceResult;
+  String? get matchedDeviceId => _matchedDeviceId;
+  String? get matchedDeviceName => _matchedDeviceName;
+  bool get isFindingDevice => _isFindingDevice;
+  String? get findingDeviceStatus => _findingDeviceStatus;
+  String? get deviceSearchError => _deviceSearchError;
+
+  // Local Storage for Remembered Device
+  String? get savedDeviceId => _savedDeviceId;
+  String? get savedDeviceName => _savedDeviceName;
+  String? get savedRemoteId => _savedRemoteId;
+  DateTime? get savedConnectedTimestamp => _savedConnectedTimestamp;
+  bool get hasSavedDevice => _savedDeviceId != null && _savedDeviceId!.isNotEmpty;
 
   // MQ-135 Gas
   int? get gasRawAdc => _gasRawAdc;
@@ -196,6 +235,19 @@ class DeviceProvider extends ChangeNotifier {
     _bleService.onAlertReceived = _handleAlertReceived;
     _bleService.onScanResult = _handleScanResult;
     _bleService.onBleLog = _handleBleLog;
+    _bleService.onDeviceIdReceived = _handleDeviceIdReceived;
+  }
+
+  void _handleDeviceIdReceived(String deviceId) {
+    _device = _device.copyWith(deviceId: deviceId);
+    if (!_device.isGenericDevice) {
+      saveConnectedDevice(
+        deviceId: deviceId,
+        deviceName: _device.name,
+        remoteId: _device.id ?? '',
+      );
+    }
+    notifyListeners();
   }
 
   void _handleBleLog(String msg, {bool isError = false}) {
@@ -229,6 +281,8 @@ class DeviceProvider extends ChangeNotifier {
         alertCharFound: _bleService.alertCharFound,
         gasCharFound: _bleService.gasCharFound,
         mpuCharFound: _bleService.mpuCharFound,
+        deviceIdCharFound: _bleService.deviceIdCharFound,
+        deviceId: _device.deviceId ?? _matchedDeviceId,
         isGenericDevice: _bleService.isGenericDevice,
         discoveredServices: _bleService.discoveredServices,
       );
@@ -537,6 +591,222 @@ class DeviceProvider extends ChangeNotifier {
       return;
     }
     await connect(found.device, isAqm: true);
+  }
+
+  // ── Unique Device ID Storage & Finding ─────────────────────────────────────
+
+  Future<void> loadSavedDevice() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _savedDeviceId = prefs.getString(BleConstants.prefLastDeviceId);
+      _savedDeviceName = prefs.getString(BleConstants.prefLastDeviceName);
+      _savedRemoteId = prefs.getString(BleConstants.prefLastRemoteId);
+      final tsStr = prefs.getString(BleConstants.prefLastConnectedTime);
+      if (tsStr != null) {
+        _savedConnectedTimestamp = DateTime.tryParse(tsStr);
+      }
+      if (_savedDeviceId != null && _targetDeviceId.isEmpty) {
+        _targetDeviceId = _savedDeviceId!;
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[Storage] Error loading saved device: $e');
+    }
+  }
+
+  Future<void> saveConnectedDevice({
+    required String deviceId,
+    required String deviceName,
+    required String remoteId,
+  }) async {
+    try {
+      final cleanId = AppUtils.normalizeDeviceId(deviceId);
+      final prefs = await SharedPreferences.getInstance();
+      final nowStr = DateTime.now().toIso8601String();
+      await prefs.setString(BleConstants.prefLastDeviceId, cleanId);
+      await prefs.setString(BleConstants.prefLastDeviceName, deviceName);
+      await prefs.setString(BleConstants.prefLastRemoteId, remoteId);
+      await prefs.setString(BleConstants.prefLastConnectedTime, nowStr);
+
+      _savedDeviceId = cleanId;
+      _savedDeviceName = deviceName;
+      _savedRemoteId = remoteId;
+      _savedConnectedTimestamp = DateTime.now();
+      _targetDeviceId = cleanId;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[Storage] Error saving connected device: $e');
+    }
+  }
+
+  Future<void> clearSavedDevice() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(BleConstants.prefLastDeviceId);
+      await prefs.remove(BleConstants.prefLastDeviceName);
+      await prefs.remove(BleConstants.prefLastRemoteId);
+      await prefs.remove(BleConstants.prefLastConnectedTime);
+
+      _savedDeviceId = null;
+      _savedDeviceName = null;
+      _savedRemoteId = null;
+      _savedConnectedTimestamp = null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[Storage] Error clearing saved device: $e');
+    }
+  }
+
+  Future<bool> findMyDevice(String rawId) async {
+    final cleanId = AppUtils.normalizeDeviceId(rawId);
+    if (!AppUtils.isValidDeviceId(cleanId)) {
+      _deviceSearchError = 'Invalid Device ID format. Example: AQM-KAM-001';
+      _matchedDeviceResult = null;
+      notifyListeners();
+      return false;
+    }
+
+    if (!_isBluetoothOn) {
+      _deviceSearchError = 'Please enable Bluetooth to find your device.';
+      notifyListeners();
+      return false;
+    }
+
+    _targetDeviceId = cleanId;
+    _isFindingDevice = true;
+    _deviceSearchError = null;
+    _matchedDeviceResult = null;
+    _matchedDeviceId = null;
+    _matchedDeviceName = null;
+    _findingDeviceStatus = 'Scanning for BLE peripherals with ID "$cleanId"…';
+    notifyListeners();
+
+    try {
+      // 1. Check currently connected system devices first
+      final systemDevices = FlutterBluePlus.connectedDevices;
+      for (final dev in systemDevices) {
+        if (dev.platformName.toUpperCase().contains(cleanId)) {
+          _matchedDeviceResult = ScanResult(
+            device: dev,
+            advertisementData: AdvertisementData(
+              advName: dev.platformName,
+              txPowerLevel: null,
+              appearance: null,
+              connectable: true,
+              manufacturerData: {},
+              serviceData: {},
+              serviceUuids: [Guid(BleConstants.serviceUuid)],
+            ),
+            rssi: -50,
+            timeStamp: DateTime.now(),
+          );
+          _matchedDeviceId = cleanId;
+          _matchedDeviceName = dev.platformName.isNotEmpty ? dev.platformName : BleConstants.deviceName;
+          _isFindingDevice = false;
+          _findingDeviceStatus = null;
+          notifyListeners();
+          return true;
+        }
+      }
+
+      // 2. Perform low-latency scan
+      ScanResult? candidateMatch;
+      final candidatePeripherals = <ScanResult>[];
+
+      await _bleService.startScan(
+        timeout: const Duration(seconds: 8),
+        onFoundTarget: (res) {
+          final advName = res.advertisementData.advName;
+          final platName = res.device.platformName;
+          String? mfgString;
+          if (res.advertisementData.manufacturerData.isNotEmpty) {
+            final allBytes = res.advertisementData.manufacturerData.values.expand((x) => x).toList();
+            mfgString = String.fromCharCodes(allBytes);
+          }
+
+          if (AppUtils.matchesDeviceIdentity(
+            targetId: cleanId,
+            advertisedName: advName,
+            platformName: platName,
+            manufacturerData: mfgString,
+          )) {
+            candidateMatch = res;
+            return true;
+          }
+
+          if (_isAqmMatch(res)) {
+            candidatePeripherals.add(res);
+          }
+          return false;
+        },
+      );
+
+      // If directly matched via advertisement
+      if (candidateMatch != null) {
+        _matchedDeviceResult = candidateMatch;
+        _matchedDeviceId = cleanId;
+        _matchedDeviceName = resolveDeviceName(candidateMatch!);
+        _isFindingDevice = false;
+        _findingDeviceStatus = null;
+        notifyListeners();
+        return true;
+      }
+
+      // 3. Fallback: inspect candidate AQM devices by reading identity characteristic
+      if (candidatePeripherals.isNotEmpty) {
+        _findingDeviceStatus = 'Verifying identity on candidate AQM peripherals…';
+        notifyListeners();
+
+        for (final candidate in candidatePeripherals) {
+          final candidateDevId = await _bleService.readDeviceIdentity(candidate.device);
+          if (candidateDevId != null && AppUtils.normalizeDeviceId(candidateDevId) == cleanId) {
+            _matchedDeviceResult = candidate;
+            _matchedDeviceId = cleanId;
+            _matchedDeviceName = resolveDeviceName(candidate);
+            _isFindingDevice = false;
+            _findingDeviceStatus = null;
+            notifyListeners();
+            return true;
+          }
+        }
+      }
+
+      // 4. Device not found
+      _deviceSearchError = 'Device with ID "$cleanId" not found. Ensure the ESP32 is powered on, within Bluetooth range (~10m), and advertising.';
+      _isFindingDevice = false;
+      _findingDeviceStatus = null;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _deviceSearchError = 'Error during device search: $e';
+      _isFindingDevice = false;
+      _findingDeviceStatus = null;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> connectMatchedDevice() async {
+    if (_matchedDeviceResult == null) return;
+    final r = _matchedDeviceResult!;
+    await connect(r.device, isAqm: true);
+    if (_matchedDeviceId != null) {
+      _device = _device.copyWith(deviceId: _matchedDeviceId);
+      await saveConnectedDevice(
+        deviceId: _matchedDeviceId!,
+        deviceName: _matchedDeviceName ?? _device.name,
+        remoteId: r.device.remoteId.str,
+      );
+    }
+  }
+
+  void clearMatchedDevice() {
+    _matchedDeviceResult = null;
+    _matchedDeviceId = null;
+    _matchedDeviceName = null;
+    _deviceSearchError = null;
+    _findingDeviceStatus = null;
+    notifyListeners();
   }
 
   Future<void> reconnect() async {

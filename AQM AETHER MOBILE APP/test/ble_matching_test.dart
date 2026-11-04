@@ -12,6 +12,8 @@ void main() {
       expect(BleConstants.samplingIntervalUuid, equals('12345678-1234-1234-1234-123456789004'));
       expect(BleConstants.alertUuid, equals('12345678-1234-1234-1234-123456789005'));
       expect(BleConstants.gasUuid, equals('12345678-1234-1234-1234-123456789006'));
+      expect(BleConstants.deviceIdUuid, equals('12345678-1234-1234-1234-123456789007'));
+      expect(BleConstants.defaultDeviceId, equals('AQM-KAM-001'));
       expect(BleConstants.accelXUuid, equals('12345678-1234-1234-1234-123456789007'));
       expect(BleConstants.accelYUuid, equals('12345678-1234-1234-1234-123456789008'));
       expect(BleConstants.accelZUuid, equals('12345678-1234-1234-1234-123456789009'));

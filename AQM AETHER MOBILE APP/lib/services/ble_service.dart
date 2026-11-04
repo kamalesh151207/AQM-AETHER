@@ -41,12 +41,15 @@ class BleService {
   OnStatusChanged? onStatusChanged;
   OnScanResult? onScanResult;
   OnBleLog? onBleLog;
+  void Function(String deviceId)? onDeviceIdReceived;
 
   BluetoothDevice? _device;
   BluetoothCharacteristic? _tempChar;
   BluetoothCharacteristic? _humidityChar;
   BluetoothCharacteristic? _intervalChar;
   BluetoothCharacteristic? _alertChar;
+  BluetoothCharacteristic? _deviceIdChar;
+  String? _currentDeviceId;
 
   // Gas Sensor (MQ-2 / MQ-135)
   BluetoothCharacteristic? _gasChar;
@@ -110,6 +113,8 @@ class BleService {
   bool get samplingIntervalCharFound => _intervalChar != null;
   bool get alertCharFound => _alertChar != null;
   bool get gasCharFound => _gasChar != null;
+  bool get deviceIdCharFound => _deviceIdChar != null;
+  String? get currentDeviceId => _currentDeviceId;
   bool get mpuCharFound => _accelXChar != null || _gyroXChar != null;
   bool get isGenericDevice => _isGenericDevice;
   List<DiscoveredServiceInfo> get discoveredServices => List.unmodifiable(_discoveredServices);
@@ -685,6 +690,7 @@ class BleService {
     final targetIntervalUuid = norm(BleConstants.samplingIntervalUuid);
     final targetAlertUuid = norm(BleConstants.alertUuid);
     final targetGasUuid = norm(BleConstants.gasUuid);
+    final targetDeviceIdUuid = norm(BleConstants.deviceIdUuid);
     final targetAxUuid = norm(BleConstants.accelXUuid);
     final targetAyUuid = norm(BleConstants.accelYUuid);
     final targetAzUuid = norm(BleConstants.accelZUuid);
@@ -709,6 +715,9 @@ class BleService {
       } else if (cNorm == targetGasUuid) {
         _gasChar = c;
         _log('MQ-2 / MQ-135 Gas characteristic mapped');
+      } else if (cNorm == targetDeviceIdUuid) {
+        _deviceIdChar = c;
+        _log('Device Identity characteristic mapped (UUID: ${c.uuid.str128})');
       } else if (cNorm == targetAxUuid) {
         _accelXChar = c;
       } else if (cNorm == targetAyUuid) {
@@ -946,6 +955,21 @@ class BleService {
       }
     }
 
+    // Read Device ID identity
+    if (_deviceIdChar != null && _deviceIdChar!.properties.read) {
+      try {
+        final bytes = await _deviceIdChar!.read();
+        final id = AppUtils.parseStringPayload(bytes);
+        if (id != null) {
+          _currentDeviceId = id;
+          _log('Verified Device ID from GATT: $id');
+          onDeviceIdReceived?.call(id);
+        }
+      } catch (e) {
+        _log('Device ID read notice: $e');
+      }
+    }
+
     // Read initial Motion if readable
     if (_accelXChar != null && _accelXChar!.properties.read) {
       try {
@@ -1030,6 +1054,55 @@ class BleService {
     }
   }
 
+  // ── Standalone Device ID Verification ──────────────────────────────────────
+
+  /// Connects briefly to candidate peripheral to read the device identity characteristic
+  Future<String?> readDeviceIdentity(BluetoothDevice device) async {
+    try {
+      _log('Inspecting candidate device for Device ID: ${device.remoteId.str}');
+      if (device.isConnected) {
+        try {
+          await device.disconnect(queue: false);
+          await Future.delayed(const Duration(milliseconds: 200));
+        } catch (_) {}
+      }
+
+      await device.connect(timeout: const Duration(seconds: 4), autoConnect: false);
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      final services = await device.discoverServices();
+      final targetServiceUuid = BleConstants.serviceUuid.replaceAll('-', '').toLowerCase();
+      final targetDevIdUuid = BleConstants.deviceIdUuid.replaceAll('-', '').toLowerCase();
+
+      for (final s in services) {
+        if (s.uuid.str128.replaceAll('-', '').toLowerCase() == targetServiceUuid) {
+          for (final c in s.characteristics) {
+            if (c.uuid.str128.replaceAll('-', '').toLowerCase() == targetDevIdUuid) {
+              final bytes = await c.read();
+              final id = AppUtils.parseStringPayload(bytes);
+              _log('Candidate ${device.remoteId.str} returned Device ID: $id');
+              try {
+                await device.disconnect(queue: false);
+              } catch (_) {}
+              return id;
+            }
+          }
+        }
+      }
+
+      try {
+        await device.disconnect(queue: false);
+      } catch (_) {}
+      return null;
+    } catch (e) {
+      _log('Could not read identity characteristic from ${device.remoteId.str}: $e');
+      try {
+        await device.disconnect(queue: false);
+      } catch (_) {}
+      return null;
+    }
+  }
+
   // ── Lifecycle Support ──────────────────────────────────────────────────────
 
   void handleAppResume() {
@@ -1075,6 +1148,8 @@ class BleService {
     _intervalChar = null;
     _alertChar = null;
     _gasChar = null;
+    _deviceIdChar = null;
+    _currentDeviceId = null;
     _accelXChar = null;
     _accelYChar = null;
     _accelZChar = null;

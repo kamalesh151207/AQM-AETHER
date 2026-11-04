@@ -230,5 +230,70 @@ abstract class AppUtils {
     }
     return value;
   }
+
+  // ── Unique Device ID Utilities ─────────────────────────────────────────────
+
+  // Parse ASCII string payload (e.g. Device ID "AQM-KAM-001")
+  static String? parseStringPayload(List<int>? bytes) {
+    if (bytes == null || bytes.isEmpty) return null;
+    try {
+      final str = String.fromCharCodes(bytes).trim();
+      final clean = str.replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '').trim();
+      return clean.isNotEmpty ? clean : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Normalize Device ID (e.g., " aqm-kam-001 " -> "AQM-KAM-001")
+  static String normalizeDeviceId(String raw) {
+    return raw.trim().toUpperCase();
+  }
+
+  // Validate Device ID format
+  // Accepts standard IDs such as AQM-KAM-001, AQM-ARU-002, AQM-RAH-003, ESP32-01
+  static bool isValidDeviceId(String raw) {
+    final clean = normalizeDeviceId(raw);
+    if (clean.length < 3 || clean.length > 32) return false;
+    return RegExp(r'^[A-Z0-9_\-]+$').hasMatch(clean);
+  }
+
+  // Check if a peripheral identity matches target Device ID
+  static bool matchesDeviceIdentity({
+    required String targetId,
+    String? advertisedName,
+    String? platformName,
+    String? manufacturerData,
+    String? readCharacteristicValue,
+  }) {
+    final target = normalizeDeviceId(targetId);
+    if (target.isEmpty) return false;
+
+    // 1. Direct characteristic match (definitive source of truth)
+    if (readCharacteristicValue != null) {
+      final readClean = normalizeDeviceId(readCharacteristicValue);
+      if (readClean == target) return true;
+    }
+
+    // 2. Manufacturer data advertisement match
+    if (manufacturerData != null) {
+      final mfgClean = normalizeDeviceId(manufacturerData);
+      if (mfgClean == target || mfgClean.contains(target)) return true;
+    }
+
+    // 3. Advertised name match
+    if (advertisedName != null) {
+      final advClean = normalizeDeviceId(advertisedName);
+      if (advClean == target || advClean.contains(target)) return true;
+    }
+
+    // 4. Platform name match
+    if (platformName != null) {
+      final platClean = normalizeDeviceId(platformName);
+      if (platClean == target || platClean.contains(target)) return true;
+    }
+
+    return false;
+  }
 }
 

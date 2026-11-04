@@ -135,6 +135,7 @@ class DiscoveredServiceInfo {
 class DeviceModel {
   final String name;
   final String? id;
+  final String? deviceId;
   final int? rssi;
   final DeviceConnectionStatus status;
   final DateTime? lastConnectedAt;
@@ -149,6 +150,7 @@ class DeviceModel {
   final bool alertCharFound;
   final bool gasCharFound;
   final bool mpuCharFound;
+  final bool deviceIdCharFound;
   final bool isGenericDevice;
   final String? alertStatus;
 
@@ -165,6 +167,7 @@ class DeviceModel {
   const DeviceModel({
     required this.name,
     this.id,
+    this.deviceId,
     this.rssi,
     this.status = DeviceConnectionStatus.idle,
     this.lastConnectedAt,
@@ -179,6 +182,7 @@ class DeviceModel {
     this.alertCharFound = false,
     this.gasCharFound = false,
     this.mpuCharFound = false,
+    this.deviceIdCharFound = false,
     this.isGenericDevice = false,
     this.discoveredServices = const [],
     this.alertStatus,
@@ -197,6 +201,7 @@ class DeviceModel {
   DeviceModel copyWith({
     String? name,
     String? id,
+    String? deviceId,
     int? rssi,
     DeviceConnectionStatus? status,
     DateTime? lastConnectedAt,
@@ -212,6 +217,7 @@ class DeviceModel {
     bool? alertCharFound,
     bool? gasCharFound,
     bool? mpuCharFound,
+    bool? deviceIdCharFound,
     bool? isGenericDevice,
     List<DiscoveredServiceInfo>? discoveredServices,
     String? alertStatus,
@@ -224,6 +230,7 @@ class DeviceModel {
     return DeviceModel(
       name: name ?? this.name,
       id: id ?? this.id,
+      deviceId: deviceId ?? this.deviceId,
       rssi: rssi ?? this.rssi,
       status: status ?? this.status,
       lastConnectedAt: lastConnectedAt ?? this.lastConnectedAt,
@@ -239,6 +246,7 @@ class DeviceModel {
       alertCharFound: alertCharFound ?? this.alertCharFound,
       gasCharFound: gasCharFound ?? this.gasCharFound,
       mpuCharFound: mpuCharFound ?? this.mpuCharFound,
+      deviceIdCharFound: deviceIdCharFound ?? this.deviceIdCharFound,
       isGenericDevice: isGenericDevice ?? this.isGenericDevice,
       discoveredServices: discoveredServices ?? this.discoveredServices,
       alertStatus: alertStatus ?? this.alertStatus,
