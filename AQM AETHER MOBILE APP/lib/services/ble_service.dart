@@ -197,7 +197,7 @@ class BleService {
           _log('Bluetooth Scan or Location permission not granted', isError: true);
           onStatusChanged?.call(
             DeviceConnectionStatus.connectionFailed,
-            'Bluetooth Scan or Location permission is required to discover nearby BLE peripherals.',
+            'Bluetooth permissions denied. Please grant Nearby Devices and Location permissions in Settings.',
           );
           return false;
         }
@@ -206,7 +206,7 @@ class BleService {
           _log('BLUETOOTH_CONNECT permission required for connection', isError: true);
           onStatusChanged?.call(
             DeviceConnectionStatus.connectionFailed,
-            'Bluetooth Connect permission is required to establish GATT link.',
+            'Bluetooth permissions denied. Please grant Nearby Devices and Location permissions in Settings.',
           );
           return false;
         }
@@ -246,7 +246,10 @@ class BleService {
     final btState = await FlutterBluePlus.adapterState.first;
     if (btState != BluetoothAdapterState.on) {
       _log('Cannot start scan: Bluetooth is disabled ($btState)', isError: true);
-      onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, 'Please enable Bluetooth on your device');
+      onStatusChanged?.call(
+        DeviceConnectionStatus.connectionFailed,
+        'Bluetooth is disabled. Please turn on Bluetooth to connect to AQM-Kamalesh.',
+      );
       return;
     }
 
@@ -385,7 +388,19 @@ class BleService {
     _log('Connecting to [${_device!.remoteId.str}] (${_device!.platformName}) [isAQM: ${!_isGenericDevice}]');
 
     try {
-      // 1. Validate permissions
+      // 1. Validate Bluetooth State
+      final btState = await FlutterBluePlus.adapterState.first;
+      if (btState != BluetoothAdapterState.on) {
+        _log('Cannot connect: Bluetooth is disabled ($btState)', isError: true);
+        _isConnecting = false;
+        onStatusChanged?.call(
+          DeviceConnectionStatus.connectionFailed,
+          'Bluetooth is disabled. Please turn on Bluetooth to connect to AQM-Kamalesh.',
+        );
+        return;
+      }
+
+      // 1.5 Validate permissions
       final permGranted = await requestPermissions(forConnecting: true);
       if (!permGranted) {
         _isConnecting = false;
@@ -443,30 +458,39 @@ class BleService {
         await _discoverServices();
       }
 
-      // 8.5 Verify Device ID if requested
+      // 8.5 Read Device ID characteristic if available on firmware
+      if (_deviceIdChar != null && _deviceIdChar!.properties.read) {
+        try {
+          final bytes = await _deviceIdChar!.read();
+          final reportedId = AppUtils.parseStringPayload(bytes);
+          if (reportedId != null && reportedId.isNotEmpty) {
+            _currentDeviceId = reportedId;
+            onDeviceIdReceived?.call(reportedId);
+            _log('ESP32 reported Device ID: "$reportedId"');
+          }
+        } catch (e) {
+          _log('Notice: Could not read device ID characteristic: $e');
+        }
+      }
+
+      // Check expected Device ID match if specific ID was enforced and reported ID was present
       if (_expectedDeviceId != null && !_isGenericDevice) {
-        onStatusChanged?.call(
-          DeviceConnectionStatus.discoveringServices,
-          'Verifying Device ID "$_expectedDeviceId"…',
-        );
+        final expectedNorm = AppUtils.normalizeDeviceId(_expectedDeviceId!);
+        final isServiceUuid = AppUtils.isValidBleUuid(expectedNorm) ||
+            expectedNorm.replaceAll('-', '') == BleConstants.serviceUuid.replaceAll('-', '').toUpperCase();
+        final isDeviceName = expectedNorm == AppUtils.normalizeDeviceId(BleConstants.deviceName);
+        final isRemoteId = expectedNorm.replaceAll(':', '').replaceAll('-', '') ==
+            _device!.remoteId.str.replaceAll(':', '').replaceAll('-', '').toUpperCase();
 
-        if (_deviceIdChar == null || !_deviceIdChar!.properties.read) {
-          _log('Device ID characteristic missing on peripheral', isError: true);
-          throw const DeviceIdMismatchException('Device ID does not match. Please check your ID.');
+        if (isServiceUuid || isDeviceName || isRemoteId) {
+          _log('Peripheral verified by ${isServiceUuid ? "Service UUID" : (isDeviceName ? "Device Name" : "BLE Identifier")}');
+        } else if (_currentDeviceId != null) {
+          final reportedNorm = AppUtils.normalizeDeviceId(_currentDeviceId!);
+          if (reportedNorm != expectedNorm) {
+            _log('Device ID mismatch: Reported "$reportedNorm" != Expected "$expectedNorm"', isError: true);
+            throw const DeviceIdMismatchException('Device ID does not match. Please check your ID.');
+          }
         }
-
-        final bytes = await _deviceIdChar!.read();
-        final reportedId = AppUtils.parseStringPayload(bytes);
-        _log('ESP32 reported Device ID: "$reportedId", expected: "$_expectedDeviceId"');
-
-        if (reportedId == null ||
-            AppUtils.normalizeDeviceId(reportedId) != AppUtils.normalizeDeviceId(_expectedDeviceId!)) {
-          _log('Device ID mismatch: Reported "$reportedId" != Expected "$_expectedDeviceId"', isError: true);
-          throw const DeviceIdMismatchException('Device ID does not match. Please check your ID.');
-        }
-
-        _currentDeviceId = reportedId;
-        onDeviceIdReceived?.call(reportedId);
       }
 
       // 9. Fully connected and operational
@@ -497,16 +521,16 @@ class BleService {
 
       final errStr = e.toString().toLowerCase();
       String userError;
-      if (errStr.contains('147') || errStr.contains('timeout')) {
-        userError = 'GATT connection timeout (Android 147). Peripheral may be busy, sleeping, or out of range.';
-      } else if (errStr.contains('133')) {
-        userError = 'Android GATT 133 error. Bluetooth radio busy or advertising restarted.';
+      if (errStr.contains('service uuid mismatch') || errStr.contains('aqm service not found')) {
+        userError = 'Service UUID mismatch. The connected device does not provide the required AQM Service (12345678-1234-1234-1234-123456789001).';
       } else if (errStr.contains('permission') || errStr.contains('securityexception')) {
-        userError = 'Bluetooth permission denied.';
-      } else if (errStr.contains('aqm service not found')) {
-        userError = 'Connected, but peripheral does not advertise AQM Service UUID (...9001).';
+        userError = 'Bluetooth permissions denied. Please grant Nearby Devices and Location permissions in Settings.';
+      } else if (errStr.contains('147') || errStr.contains('timeout') || errStr.contains('timed out')) {
+        userError = 'Connection timeout. The device may be busy, out of range, or already connected to another client.';
+      } else if (errStr.contains('133')) {
+        userError = 'Android GATT 133 error. Bluetooth radio busy. Please retry.';
       } else {
-        userError = 'Connection error: ${e.toString()}';
+        userError = e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
       }
 
       onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, userError);
@@ -730,7 +754,7 @@ class BleService {
     if (aqmService == null) {
       final foundUuids = services.map((s) => s.uuid.str128).join(', ');
       _log('AQM Service UUID ${BleConstants.serviceUuid} not found. Discovered: [$foundUuids]', isError: true);
-      throw Exception('AQM Service not found on device');
+      throw Exception('Service UUID mismatch: The connected device does not provide the required AQM Service (12345678-1234-1234-1234-123456789001).');
     }
 
     _log('AQM GATT Service located: ${aqmService.uuid.str128}');

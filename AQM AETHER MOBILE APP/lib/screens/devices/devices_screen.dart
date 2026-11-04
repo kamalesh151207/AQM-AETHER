@@ -37,6 +37,10 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
       }
       if (!prov.isConnected && !prov.isScanning && prov.isBluetoothOn) {
         prov.startScan();
+        // On launch: automatically attempt reconnection to previously paired device without asking for ID
+        if (prov.hasSavedDevice) {
+          prov.connectToAqm();
+        }
       }
     });
   }
@@ -388,6 +392,33 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 style: TextButton.styleFrom(foregroundColor: AppColors.accentPrimary),
               ),
             ),
+          ] else if (!isConnected && provider.hasSavedDevice) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Paired: ${provider.savedDeviceName ?? "AQM-Kamalesh"}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => provider.connectToAqm(),
+                  icon: const Icon(Icons.refresh_rounded, size: 14),
+                  label: const Text(
+                    'RECONNECT',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.accentPrimary),
+                ),
+              ],
+            ),
           ],
         ],
       ),
@@ -509,10 +540,10 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                     validator: (val) {
                       final trimmed = (val ?? '').trim();
                       if (trimmed.isEmpty) {
-                        return 'Please enter your AQM Device ID';
+                        return 'Please enter your AQM Device ID or Service UUID';
                       }
                       if (!AppUtils.isValidDeviceId(trimmed)) {
-                        return 'ID must be 3-32 characters (letters, numbers, hyphens)';
+                        return 'Invalid ID format. Supports standard IDs, BLE UUIDs, and MAC addresses';
                       }
                       return null;
                     },
@@ -765,7 +796,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                 if (isRegistered) {
                   provider.reconnectRegisteredDevice(result.device, registered);
                 } else if (isAqm) {
-                  _promptForDeviceId(context, provider, result);
+                  provider.connect(result.device, isAqm: true);
                 } else {
                   provider.connect(result.device, isAqm: false);
                 }
@@ -949,14 +980,24 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       ),
                     ),
                   )
-                else
+                else ...[
+                  if (isAqm && !isRegistered)
+                    IconButton(
+                      tooltip: 'Pair with custom Device ID',
+                      icon: const Icon(Icons.badge_outlined, size: 16, color: AppColors.textSecondary),
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        _promptForDeviceId(context, provider, result);
+                      },
+                    ),
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.lightImpact();
                       if (isRegistered) {
                         provider.reconnectRegisteredDevice(result.device, registered);
                       } else if (isAqm) {
-                        _promptForDeviceId(context, provider, result);
+                        provider.connect(result.device, isAqm: true);
                       } else {
                         provider.connect(result.device, isAqm: false);
                       }
@@ -979,6 +1020,7 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       ),
                     ),
                   ),
+                ],
               ],
             ),
           ],

@@ -84,16 +84,29 @@ void main() {
       expect(AppUtils.parseStringPayload([]), isNull);
     });
 
-    test('normalizes and validates unique AQM Device IDs', () {
+    test('normalizes and validates unique AQM Device IDs and BLE UUIDs', () {
       expect(AppUtils.normalizeDeviceId('  aqm-kam-001  '), equals('AQM-KAM-001'));
       expect(AppUtils.isValidDeviceId('AQM-KAM-001'), isTrue);
       expect(AppUtils.isValidDeviceId('AQM-ARU-002'), isTrue);
       expect(AppUtils.isValidDeviceId('AQM-RAH-003'), isTrue);
+      expect(AppUtils.isValidDeviceId('AQM-Kamalesh'), isTrue);
       expect(AppUtils.isValidDeviceId('ESP32_01'), isTrue);
+
+      // BLE UUID formats (Requirement 3 & 4)
+      expect(AppUtils.isValidBleUuid('12345678-1234-1234-1234-123456789001'), isTrue);
+      expect(AppUtils.isValidBleUuid('12345678123412341234123456789001'), isTrue);
+      expect(AppUtils.isValidBleUuid('12345678-1234-1234-1234-123456789001'.toUpperCase()), isTrue);
+      expect(AppUtils.isValidDeviceId('12345678-1234-1234-1234-123456789001'), isTrue);
+
+      // MAC address formats (Requirement 5)
+      expect(AppUtils.isValidMacAddress('CC:50:E3:A1:B2:C3'), isTrue);
+      expect(AppUtils.isValidMacAddress('cc:50:e3:a1:b2:c3'), isTrue);
+      expect(AppUtils.isValidMacAddress('CC-50-E3-A1-B2-C3'), isTrue);
+      expect(AppUtils.isValidDeviceId('CC:50:E3:A1:B2:C3'), isTrue);
 
       // Invalid formats
       expect(AppUtils.isValidDeviceId(''), isFalse);
-      expect(AppUtils.isValidDeviceId('AB'), isFalse); // too short
+      expect(AppUtils.isValidDeviceId('AB'), isFalse); // too short (<3)
       expect(AppUtils.isValidDeviceId('AQM@#\$%'), isFalse); // invalid characters
     });
 

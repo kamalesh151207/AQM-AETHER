@@ -250,47 +250,97 @@ abstract class AppUtils {
     return raw.trim().toUpperCase();
   }
 
-  // Validate Device ID format
-  // Accepts standard IDs such as AQM-KAM-001, AQM-ARU-002, AQM-RAH-003, ESP32-01
-  static bool isValidDeviceId(String raw) {
-    final clean = normalizeDeviceId(raw);
-    if (clean.length < 3 || clean.length > 32) return false;
-    return RegExp(r'^[A-Z0-9_\-]+$').hasMatch(clean);
+  // Validate BLE UUID format (e.g. 12345678-1234-1234-1234-123456789001)
+  // Supports standard 128-bit hyphenated UUIDs (36 chars: 8-4-4-4-12),
+  // 32-character hex UUIDs without hyphens, and 16/32-bit short UUIDs
+  static bool isValidBleUuid(String raw) {
+    final clean = raw.trim().toLowerCase();
+    // 128-bit standard UUID with hyphens (e.g. 12345678-1234-1234-1234-123456789001)
+    if (RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$').hasMatch(clean)) {
+      return true;
+    }
+    // 128-bit hex UUID without hyphens (32 hex characters)
+    if (RegExp(r'^[0-9a-f]{32}$').hasMatch(clean)) {
+      return true;
+    }
+    // 16-bit or 32-bit short UUIDs
+    if (RegExp(r'^[0-9a-f]{4}$').hasMatch(clean) || RegExp(r'^[0-9a-f]{8}$').hasMatch(clean)) {
+      return true;
+    }
+    return false;
   }
 
-  // Check if a peripheral identity matches target Device ID
+  // Validate MAC address format (e.g. CC:50:E3:A1:B2:C3 or cc-50-e3-a1-b2-c3)
+  static bool isValidMacAddress(String raw) {
+    final clean = raw.trim().toUpperCase();
+    return RegExp(r'^([0-9A-F]{2}[:\-]){5}[0-9A-F]{2}$').hasMatch(clean);
+  }
+
+  // Validate Device ID, Service UUID, or BLE device identifier
+  // Accepts:
+  // - Valid 128-bit BLE UUIDs with hyphens (e.g. 12345678-1234-1234-1234-123456789001)
+  // - MAC addresses (e.g. CC:50:E3:A1:B2:C3)
+  // - Device names and configured identifiers (e.g. AQM-Kamalesh, AQM-KAM-001)
+  static bool isValidDeviceId(String raw) {
+    final clean = raw.trim();
+    if (clean.length < 3 || clean.length > 64) return false;
+    if (isValidBleUuid(clean)) return true;
+    if (isValidMacAddress(clean)) return true;
+    // Allow alphanumeric characters, hyphens, underscores, colons, dots, spaces
+    return RegExp(r'^[A-Za-z0-9_\-:\.\s]+$').hasMatch(clean);
+  }
+
+  // Check if a peripheral identity matches target Device ID, Service UUID, or Name
   static bool matchesDeviceIdentity({
     required String targetId,
     String? advertisedName,
     String? platformName,
+    String? remoteId,
+    List<String>? serviceUuids,
     String? manufacturerData,
     String? readCharacteristicValue,
   }) {
     final target = normalizeDeviceId(targetId);
     if (target.isEmpty) return false;
 
-    // 1. Direct characteristic match (definitive source of truth)
+    // 1. BLE Service UUID match (e.g. 12345678-1234-1234-1234-123456789001)
+    if (serviceUuids != null && serviceUuids.isNotEmpty) {
+      final targetNorm = target.replaceAll('-', '').toLowerCase();
+      for (final u in serviceUuids) {
+        final uNorm = u.replaceAll('-', '').toLowerCase();
+        if (uNorm == targetNorm || uNorm.contains(targetNorm)) return true;
+      }
+    }
+
+    // 2. BLE Remote ID / MAC address match
+    if (remoteId != null) {
+      final rClean = remoteId.replaceAll(':', '').replaceAll('-', '').toUpperCase();
+      final tClean = target.replaceAll(':', '').replaceAll('-', '').toUpperCase();
+      if (rClean == tClean) return true;
+    }
+
+    // 3. Direct characteristic match (definitive source of truth if available)
     if (readCharacteristicValue != null) {
       final readClean = normalizeDeviceId(readCharacteristicValue);
       if (readClean == target) return true;
     }
 
-    // 2. Manufacturer data advertisement match
+    // 4. Advertised name match
+    if (advertisedName != null) {
+      final advClean = normalizeDeviceId(advertisedName);
+      if (advClean == target || advClean.contains(target) || target.contains(advClean)) return true;
+    }
+
+    // 5. Platform name match
+    if (platformName != null) {
+      final platClean = normalizeDeviceId(platformName);
+      if (platClean == target || platClean.contains(target) || target.contains(platClean)) return true;
+    }
+
+    // 6. Manufacturer data advertisement match
     if (manufacturerData != null) {
       final mfgClean = normalizeDeviceId(manufacturerData);
       if (mfgClean == target || mfgClean.contains(target)) return true;
-    }
-
-    // 3. Advertised name match
-    if (advertisedName != null) {
-      final advClean = normalizeDeviceId(advertisedName);
-      if (advClean == target || advClean.contains(target)) return true;
-    }
-
-    // 4. Platform name match
-    if (platformName != null) {
-      final platClean = normalizeDeviceId(platformName);
-      if (platClean == target || platClean.contains(target)) return true;
     }
 
     return false;

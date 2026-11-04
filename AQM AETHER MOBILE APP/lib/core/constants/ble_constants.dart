@@ -25,6 +25,7 @@ abstract class BleConstants {
   static const String prefLastDeviceId = 'aqm_last_connected_device_id';
   static const String prefLastDeviceName = 'aqm_last_connected_device_name';
   static const String prefLastRemoteId = 'aqm_last_connected_remote_id';
+  static const String prefLastServiceUuid = 'aqm_last_connected_service_uuid';
   static const String prefLastConnectedTime = 'aqm_last_connected_timestamp';
 
   // MPU6050 Accelerometer & Gyroscope Characteristic UUIDs

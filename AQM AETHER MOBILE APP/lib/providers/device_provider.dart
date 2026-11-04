@@ -126,7 +126,10 @@ class DeviceProvider extends ChangeNotifier {
   String? get savedDeviceName => _savedDeviceName;
   String? get savedRemoteId => _savedRemoteId;
   DateTime? get savedConnectedTimestamp => _savedConnectedTimestamp;
-  bool get hasSavedDevice => _savedDeviceId != null && _savedDeviceId!.isNotEmpty;
+  bool get hasSavedDevice =>
+      (_savedDeviceId != null && _savedDeviceId!.isNotEmpty) ||
+      (_savedRemoteId != null && _savedRemoteId!.isNotEmpty) ||
+      _registeredDevices.isNotEmpty;
 
   // Multiple Registered Devices Registry
   List<RegisteredDevice> get registeredDevices => _registeredDevices.values.toList();
@@ -340,9 +343,12 @@ class DeviceProvider extends ChangeNotifier {
       );
 
       final currentDevId = _device.deviceId ?? _matchedDeviceId;
-      if (!_device.isGenericDevice && currentDevId != null && currentDevId.isNotEmpty) {
+      if (!_device.isGenericDevice) {
+        final effectiveId = (currentDevId != null && currentDevId.isNotEmpty)
+            ? currentDevId
+            : (_device.name.isNotEmpty ? _device.name : 'AQM-DEVICE');
         saveConnectedDevice(
-          deviceId: currentDevId,
+          deviceId: effectiveId,
           deviceName: _device.name,
           remoteId: _device.id ?? '',
         );
@@ -635,14 +641,31 @@ class DeviceProvider extends ChangeNotifier {
 
     // 1. Check if device is already connected via system Bluetooth
     final systemDevices = FlutterBluePlus.connectedDevices;
-    final connectedTarget = systemDevices.firstWhereOrNull(_isDeviceMatch);
+    final connectedTarget = systemDevices.firstWhereOrNull((d) {
+      if (_savedRemoteId != null && _savedRemoteId!.isNotEmpty &&
+          d.remoteId.str.toLowerCase() == _savedRemoteId!.toLowerCase()) {
+        return true;
+      }
+      return _isDeviceMatch(d);
+    });
     if (connectedTarget != null) {
       _handleBleLog('Found previously connected system peripheral: ${connectedTarget.platformName}');
       await connect(connectedTarget, isAqm: true, expectedDeviceId: targetId);
       return;
     }
 
-    // 2. Check existing scan results
+    // 2. Check existing scan results for previously paired remoteId
+    if (_savedRemoteId != null && _savedRemoteId!.isNotEmpty) {
+      final savedMatch = _scanResults.firstWhereOrNull(
+        (r) => r.device.remoteId.str.toLowerCase() == _savedRemoteId!.toLowerCase(),
+      );
+      if (savedMatch != null) {
+        _handleBleLog('Connecting to previously paired device: [${savedMatch.device.remoteId.str}]');
+        await connect(savedMatch.device, isAqm: true, expectedDeviceId: targetId);
+        return;
+      }
+    }
+
     final target = aqmDevice;
     if (target != null) {
       _handleBleLog('Connecting to known cached peripheral: ${target.device.remoteId.str}');
@@ -655,16 +678,33 @@ class DeviceProvider extends ChangeNotifier {
     notifyListeners();
     await _bleService.startScan(
       timeout: const Duration(seconds: 8),
-      onFoundTarget: _isAqmMatch,
+      onFoundTarget: (r) {
+        if (_savedRemoteId != null && _savedRemoteId!.isNotEmpty &&
+            r.device.remoteId.str.toLowerCase() == _savedRemoteId!.toLowerCase()) {
+          return true;
+        }
+        return _isAqmMatch(r);
+      },
     );
     _isScanning = false;
     notifyListeners();
+
+    // Check paired remoteId again in updated results
+    if (_savedRemoteId != null && _savedRemoteId!.isNotEmpty) {
+      final savedMatch = _scanResults.firstWhereOrNull(
+        (r) => r.device.remoteId.str.toLowerCase() == _savedRemoteId!.toLowerCase(),
+      );
+      if (savedMatch != null) {
+        await connect(savedMatch.device, isAqm: true, expectedDeviceId: targetId);
+        return;
+      }
+    }
 
     final found = aqmDevice;
     if (found == null) {
       _handleStatusChanged(
         DeviceConnectionStatus.error,
-        'Device "AQM-Kamalesh" not found. Ensure the ESP32 is powered on, within Bluetooth range, and advertising.',
+        'Device "AQM-Kamalesh" not found. Ensure your ESP32 is powered on and within range (~10m).',
       );
       return;
     }
@@ -758,8 +798,18 @@ class DeviceProvider extends ChangeNotifier {
     required String remoteId,
   }) async {
     try {
-      final cleanId = AppUtils.normalizeDeviceId(deviceId);
       final cleanRemoteId = remoteId.trim();
+
+      // REQUIREMENT 9: Do not save the service UUID as the device identifier
+      final serviceUuidNorm = BleConstants.serviceUuid.replaceAll('-', '').toLowerCase();
+      if (cleanRemoteId.isEmpty ||
+          cleanRemoteId.replaceAll('-', '').toLowerCase() == serviceUuidNorm) {
+        debugPrint('[Storage] Notice: Cannot save service UUID or empty string as device remoteId.');
+        return;
+      }
+
+      final cleanName = deviceName.isNotEmpty ? deviceName : BleConstants.deviceName;
+      final cleanId = deviceId.isNotEmpty ? AppUtils.normalizeDeviceId(deviceId) : cleanName;
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
 
@@ -768,7 +818,8 @@ class DeviceProvider extends ChangeNotifier {
       RegisteredDevice? existing = _registeredDevices[existingKey];
       if (existing == null) {
         for (final reg in _registeredDevices.values) {
-          if (reg.deviceId.toUpperCase() == cleanId.toUpperCase()) {
+          if (reg.remoteId.toLowerCase() == cleanRemoteId.toLowerCase() ||
+              reg.deviceName.toLowerCase() == cleanName.toLowerCase()) {
             existing = reg;
             break;
           }
@@ -777,32 +828,32 @@ class DeviceProvider extends ChangeNotifier {
 
       final newRegistration = RegisteredDevice(
         deviceId: cleanId,
-        remoteId: cleanRemoteId.isNotEmpty ? cleanRemoteId : (existing?.remoteId ?? cleanId),
-        deviceName: deviceName.isNotEmpty ? deviceName : (existing?.deviceName ?? BleConstants.deviceName),
+        remoteId: cleanRemoteId,
+        deviceName: cleanName,
         serviceUuid: BleConstants.serviceUuid,
         registeredAt: existing?.registeredAt ?? now,
         lastConnectedAt: now,
       );
 
-      final storeKey = (cleanRemoteId.isNotEmpty ? cleanRemoteId : cleanId).toLowerCase();
-      _registeredDevices[storeKey] = newRegistration;
+      _registeredDevices[cleanRemoteId.toLowerCase()] = newRegistration;
 
       // Persist full registry to SharedPreferences
       await _persistRegistry(prefs);
 
-      // Also persist legacy keys for backward compatibility
-      await prefs.setString(BleConstants.prefLastDeviceId, cleanId);
-      await prefs.setString(BleConstants.prefLastDeviceName, newRegistration.deviceName);
+      // Persist BLE Device Identifier, Device Name, and Service UUID separately
       await prefs.setString(BleConstants.prefLastRemoteId, cleanRemoteId);
+      await prefs.setString(BleConstants.prefLastDeviceName, cleanName);
+      await prefs.setString(BleConstants.prefLastDeviceId, cleanId);
+      await prefs.setString(BleConstants.prefLastServiceUuid, BleConstants.serviceUuid);
       await prefs.setString(BleConstants.prefLastConnectedTime, now.toIso8601String());
 
-      _savedDeviceId = cleanId;
-      _savedDeviceName = newRegistration.deviceName;
       _savedRemoteId = cleanRemoteId;
+      _savedDeviceName = cleanName;
+      _savedDeviceId = cleanId;
       _savedConnectedTimestamp = now;
       _targetDeviceId = cleanId;
 
-      _handleBleLog('Device identity saved to registry [ID: $cleanId] (${newRegistration.deviceName})');
+      _handleBleLog('Paired BLE device saved: "$cleanName" [Identifier: $cleanRemoteId]');
       notifyListeners();
     } catch (e) {
       debugPrint('[Storage] Error saving connected device: $e');
@@ -950,9 +1001,9 @@ class DeviceProvider extends ChangeNotifier {
   }
 
   Future<bool> findMyDevice(String rawId) async {
-    final cleanId = AppUtils.normalizeDeviceId(rawId);
+    final cleanId = rawId.trim();
     if (!AppUtils.isValidDeviceId(cleanId)) {
-      _deviceSearchError = 'Invalid Device ID format. Example: AQM-KAM-001';
+      _deviceSearchError = 'Invalid Device ID format. Enter Device Name, Service UUID, or MAC address.';
       _matchedDeviceResult = null;
       notifyListeners();
       return false;
@@ -970,14 +1021,15 @@ class DeviceProvider extends ChangeNotifier {
     _matchedDeviceResult = null;
     _matchedDeviceId = null;
     _matchedDeviceName = null;
-    _findingDeviceStatus = 'Scanning for BLE peripherals with ID "$cleanId"…';
+    _findingDeviceStatus = 'Scanning for BLE peripherals with identifier "$cleanId"…';
     notifyListeners();
 
     try {
       // 1. Check currently connected system devices first
       final systemDevices = FlutterBluePlus.connectedDevices;
       for (final dev in systemDevices) {
-        if (dev.platformName.toUpperCase().contains(cleanId)) {
+        if (dev.platformName.toUpperCase().contains(cleanId.toUpperCase()) ||
+            dev.remoteId.str.toUpperCase() == cleanId.toUpperCase()) {
           _matchedDeviceResult = ScanResult(
             device: dev,
             advertisementData: AdvertisementData(
@@ -1016,10 +1068,13 @@ class DeviceProvider extends ChangeNotifier {
             mfgString = String.fromCharCodes(allBytes);
           }
 
+          final uuids = res.advertisementData.serviceUuids.map((u) => u.str128).toList();
           if (AppUtils.matchesDeviceIdentity(
             targetId: cleanId,
             advertisedName: advName,
             platformName: platName,
+            remoteId: res.device.remoteId.str,
+            serviceUuids: uuids,
             manufacturerData: mfgString,
           )) {
             candidateMatch = res;
