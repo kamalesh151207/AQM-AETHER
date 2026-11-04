@@ -2,6 +2,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aqm_aether/core/constants/ble_constants.dart';
+import 'package:aqm_aether/services/ble_service.dart';
 
 void main() {
   group('BLE Constants & UUID Normalization', () {
@@ -46,6 +47,12 @@ void main() {
       expect(norm('12345678-1234-1234-1234-123456789001'), equals(targetNorm));
       expect(norm('12345678123412341234123456789001'), equals(targetNorm));
       expect(norm('12345678-1234-1234-1234-123456789001'.toUpperCase()), equals(targetNorm));
+    });
+
+    test('DeviceIdMismatchException message formatting', () {
+      const ex = DeviceIdMismatchException('Device ID does not match. Please check your ID.');
+      expect(ex.message, equals('Device ID does not match. Please check your ID.'));
+      expect(ex.toString(), contains('Device ID does not match. Please check your ID.'));
     });
   });
 }

@@ -29,6 +29,13 @@ typedef OnStatusChanged = void Function(DeviceConnectionStatus status, String? e
 typedef OnScanResult = void Function(List<ScanResult> results);
 typedef OnBleLog = void Function(String message, {bool isError});
 
+class DeviceIdMismatchException implements Exception {
+  final String message;
+  const DeviceIdMismatchException(this.message);
+  @override
+  String toString() => message;
+}
+
 class BleService {
   // Callbacks
   OnTemperatureReceived? onTemperatureReceived;
@@ -86,6 +93,7 @@ class BleService {
   bool _isDisposing = false;
   bool _isScanning = false;
   bool _isGenericDevice = false;
+  String? _expectedDeviceId;
 
   final List<ScanResult> _scanResults = [];
   final Map<String, ScanResult> _deviceCache = {};
@@ -344,7 +352,11 @@ class BleService {
 
   // ── Connection Management ──────────────────────────────────────────────────
 
-  Future<void> connectToDevice(BluetoothDevice device, {bool isAqm = true}) async {
+  Future<void> connectToDevice(
+    BluetoothDevice device, {
+    bool isAqm = true,
+    String? expectedDeviceId,
+  }) async {
     if (_isConnecting) {
       _log('Connection already in progress to ${_device?.remoteId.str}. Rejecting concurrent request.');
       return;
@@ -354,6 +366,7 @@ class BleService {
     _autoReconnect = isAqm;
     _isGenericDevice = !isAqm;
     _device = device;
+    _expectedDeviceId = expectedDeviceId;
     _reconnectAttempts = 0;
     _cancelReconnectTimer();
     _discoveredServices.clear();
@@ -430,6 +443,32 @@ class BleService {
         await _discoverServices();
       }
 
+      // 8.5 Verify Device ID if requested
+      if (_expectedDeviceId != null && !_isGenericDevice) {
+        onStatusChanged?.call(
+          DeviceConnectionStatus.discoveringServices,
+          'Verifying Device ID "$_expectedDeviceId"…',
+        );
+
+        if (_deviceIdChar == null || !_deviceIdChar!.properties.read) {
+          _log('Device ID characteristic missing on peripheral', isError: true);
+          throw const DeviceIdMismatchException('Device ID does not match. Please check your ID.');
+        }
+
+        final bytes = await _deviceIdChar!.read();
+        final reportedId = AppUtils.parseStringPayload(bytes);
+        _log('ESP32 reported Device ID: "$reportedId", expected: "$_expectedDeviceId"');
+
+        if (reportedId == null ||
+            AppUtils.normalizeDeviceId(reportedId) != AppUtils.normalizeDeviceId(_expectedDeviceId!)) {
+          _log('Device ID mismatch: Reported "$reportedId" != Expected "$_expectedDeviceId"', isError: true);
+          throw const DeviceIdMismatchException('Device ID does not match. Please check your ID.');
+        }
+
+        _currentDeviceId = reportedId;
+        onDeviceIdReceived?.call(reportedId);
+      }
+
       // 9. Fully connected and operational
       _isConnecting = false;
       _isFullyConnected = true;
@@ -440,6 +479,17 @@ class BleService {
 
       onStatusChanged?.call(DeviceConnectionStatus.ready, null);
       _log('Device fully configured: telemetry notifications active (State: READY)');
+    } on DeviceIdMismatchException catch (e) {
+      _isConnecting = false;
+      _isFullyConnected = false;
+      _autoReconnect = false; // Never auto-reconnect if device ID did not match
+      _log('Connection aborted due to Device ID mismatch: ${e.message}', isError: true);
+      try {
+        await _device?.disconnect(queue: false);
+      } catch (_) {}
+      _cleanupCharacteristics();
+      _cleanupSubscriptions();
+      onStatusChanged?.call(DeviceConnectionStatus.connectionFailed, e.message);
     } catch (e) {
       _isConnecting = false;
       _isFullyConnected = false;

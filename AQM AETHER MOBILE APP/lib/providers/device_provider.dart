@@ -542,25 +542,42 @@ class DeviceProvider extends ChangeNotifier {
     return _scanResults.firstWhereOrNull(_isAqmMatch);
   }
 
-  Future<void> connect(BluetoothDevice device, {bool isAqm = true}) async {
+  Future<void> connect(
+    BluetoothDevice device, {
+    bool isAqm = true,
+    String? expectedDeviceId,
+  }) async {
     final devName = device.platformName.isNotEmpty ? device.platformName : device.remoteId.str;
-    _device = _device.copyWith(name: devName, id: device.remoteId.str);
+    final cleanId = expectedDeviceId != null ? AppUtils.normalizeDeviceId(expectedDeviceId) : null;
+    _device = _device.copyWith(name: devName, id: device.remoteId.str, deviceId: cleanId);
     notifyListeners();
-    await _bleService.connectToDevice(device, isAqm: isAqm);
+    await _bleService.connectToDevice(
+      device,
+      isAqm: isAqm,
+      expectedDeviceId: cleanId,
+    );
   }
 
-  Future<void> connectToDevice(BluetoothDevice device, {bool isAqm = true}) =>
-      connect(device, isAqm: isAqm);
+  Future<void> connectWithDeviceId(BluetoothDevice device, String expectedDeviceId) =>
+      connect(device, isAqm: true, expectedDeviceId: expectedDeviceId);
 
-  Future<void> connectToAqm() async {
+  Future<void> connectToDevice(
+    BluetoothDevice device, {
+    bool isAqm = true,
+    String? expectedDeviceId,
+  }) =>
+      connect(device, isAqm: isAqm, expectedDeviceId: expectedDeviceId);
+
+  Future<void> connectToAqm({String? expectedDeviceId}) async {
     if (isConnected || _bleService.isConnecting) return;
+    final targetId = expectedDeviceId ?? _savedDeviceId;
 
     // 1. Check if device is already connected via system Bluetooth
     final systemDevices = FlutterBluePlus.connectedDevices;
     final connectedTarget = systemDevices.firstWhereOrNull(_isDeviceMatch);
     if (connectedTarget != null) {
       _handleBleLog('Found previously connected system peripheral: ${connectedTarget.platformName}');
-      await connect(connectedTarget, isAqm: true);
+      await connect(connectedTarget, isAqm: true, expectedDeviceId: targetId);
       return;
     }
 
@@ -568,11 +585,11 @@ class DeviceProvider extends ChangeNotifier {
     final target = aqmDevice;
     if (target != null) {
       _handleBleLog('Connecting to known cached peripheral: ${target.device.remoteId.str}');
-      await connect(target.device, isAqm: true);
+      await connect(target.device, isAqm: true, expectedDeviceId: targetId);
       return;
     }
 
-    // 3. Scan and locate peripheral (auto-terminates as soon as AQM-Kamalesh is heard)
+    // 3. Scan and locate peripheral (auto-terminates as soon as AQM peripheral is heard)
     _isScanning = true;
     notifyListeners();
     await _bleService.startScan(
@@ -590,7 +607,7 @@ class DeviceProvider extends ChangeNotifier {
       );
       return;
     }
-    await connect(found.device, isAqm: true);
+    await connect(found.device, isAqm: true, expectedDeviceId: targetId);
   }
 
   // ── Unique Device ID Storage & Finding ─────────────────────────────────────
