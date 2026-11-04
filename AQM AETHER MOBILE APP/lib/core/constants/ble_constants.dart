@@ -20,7 +20,8 @@ abstract class BleConstants {
   // Unique AQM Device Identity Characteristic UUID
   static const String deviceIdUuid = '12345678-1234-1234-1234-123456789007';
 
-  // Local Storage Preference Keys for Remembered Device
+  // Local Storage Preference Keys for Remembered Device & Multiple Device Registry
+  static const String prefRegisteredDevices = 'aqm_registered_devices_registry';
   static const String prefLastDeviceId = 'aqm_last_connected_device_id';
   static const String prefLastDeviceName = 'aqm_last_connected_device_name';
   static const String prefLastRemoteId = 'aqm_last_connected_remote_id';

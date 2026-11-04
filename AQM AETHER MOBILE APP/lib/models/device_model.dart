@@ -262,3 +262,69 @@ class DeviceModel {
     );
   }
 }
+
+/// Persistent verified device identity registration
+class RegisteredDevice {
+  final String deviceId; // e.g. "AQM-KAM-001"
+  final String remoteId; // BLE peripheral identifier (UUID / MAC)
+  final String deviceName; // e.g. "AQM-Kamalesh"
+  final String serviceUuid; // Service UUID
+  final DateTime registeredAt; // Registration timestamp
+  final DateTime lastConnectedAt; // Last connected timestamp
+
+  const RegisteredDevice({
+    required this.deviceId,
+    required this.remoteId,
+    required this.deviceName,
+    this.serviceUuid = '12345678-1234-1234-1234-123456789001',
+    required this.registeredAt,
+    required this.lastConnectedAt,
+  });
+
+  RegisteredDevice copyWith({
+    String? deviceId,
+    String? remoteId,
+    String? deviceName,
+    String? serviceUuid,
+    DateTime? registeredAt,
+    DateTime? lastConnectedAt,
+  }) {
+    return RegisteredDevice(
+      deviceId: deviceId ?? this.deviceId,
+      remoteId: remoteId ?? this.remoteId,
+      deviceName: deviceName ?? this.deviceName,
+      serviceUuid: serviceUuid ?? this.serviceUuid,
+      registeredAt: registeredAt ?? this.registeredAt,
+      lastConnectedAt: lastConnectedAt ?? this.lastConnectedAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'deviceId': deviceId,
+    'remoteId': remoteId,
+    'deviceName': deviceName,
+    'serviceUuid': serviceUuid,
+    'registeredAt': registeredAt.toIso8601String(),
+    'lastConnectedAt': lastConnectedAt.toIso8601String(),
+  };
+
+  factory RegisteredDevice.fromJson(Map<String, dynamic> json) => RegisteredDevice(
+    deviceId: json['deviceId'] as String? ?? '',
+    remoteId: json['remoteId'] as String? ?? '',
+    deviceName: json['deviceName'] as String? ?? '',
+    serviceUuid: json['serviceUuid'] as String? ?? '12345678-1234-1234-1234-123456789001',
+    registeredAt: DateTime.tryParse(json['registeredAt'] as String? ?? '') ?? DateTime.now(),
+    lastConnectedAt: DateTime.tryParse(json['lastConnectedAt'] as String? ?? '') ?? DateTime.now(),
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RegisteredDevice &&
+          runtimeType == other.runtimeType &&
+          deviceId.toUpperCase() == other.deviceId.toUpperCase() &&
+          remoteId.toLowerCase() == other.remoteId.toLowerCase();
+
+  @override
+  int get hashCode => deviceId.toUpperCase().hashCode ^ remoteId.toLowerCase().hashCode;
+}

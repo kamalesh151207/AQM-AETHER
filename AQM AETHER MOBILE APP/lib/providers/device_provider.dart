@@ -2,6 +2,7 @@
 // State Management for BLE Device Connection, Diagnostics, and Telemetry
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -59,6 +60,9 @@ class DeviceProvider extends ChangeNotifier {
   String? _savedDeviceName;
   String? _savedRemoteId;
   DateTime? _savedConnectedTimestamp;
+
+  // Multiple Registered Devices Registry (Key: normalized remoteId or deviceId)
+  final Map<String, RegisteredDevice> _registeredDevices = {};
 
   // Diagnostics log stream
   final List<String> _diagnosticsLog = [];
@@ -123,6 +127,54 @@ class DeviceProvider extends ChangeNotifier {
   String? get savedRemoteId => _savedRemoteId;
   DateTime? get savedConnectedTimestamp => _savedConnectedTimestamp;
   bool get hasSavedDevice => _savedDeviceId != null && _savedDeviceId!.isNotEmpty;
+
+  // Multiple Registered Devices Registry
+  List<RegisteredDevice> get registeredDevices => _registeredDevices.values.toList();
+  bool get hasRegisteredDevices => _registeredDevices.isNotEmpty;
+
+  RegisteredDevice? getRegisteredDevice(String remoteId) {
+    if (remoteId.isEmpty) return null;
+    return _registeredDevices[remoteId.toLowerCase().trim()];
+  }
+
+  RegisteredDevice? getRegistrationForDevice(BluetoothDevice device, {String? advertisedName}) {
+    // 1. Primary match: by BLE remote identifier
+    final remoteId = device.remoteId.str.toLowerCase().trim();
+    if (_registeredDevices.containsKey(remoteId)) {
+      return _registeredDevices[remoteId];
+    }
+
+    // 2. Secondary match: by device name if unique and not generic placeholder
+    final name = (advertisedName != null && advertisedName.trim().isNotEmpty)
+        ? advertisedName.trim()
+        : (device.platformName.trim().isNotEmpty ? device.platformName.trim() : null);
+
+    if (name != null &&
+        name.toLowerCase() != 'aqm' &&
+        name.toLowerCase() != 'esp32' &&
+        name.toLowerCase() != 'generic') {
+      for (final reg in _registeredDevices.values) {
+        if (reg.deviceName.toLowerCase() == name.toLowerCase()) {
+          return reg;
+        }
+      }
+    }
+
+    // 3. Match if device advertised name directly equals a registered Device ID (e.g. "AQM-KAM-001")
+    if (name != null) {
+      for (final reg in _registeredDevices.values) {
+        if (reg.deviceId.toUpperCase() == name.toUpperCase()) {
+          return reg;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  bool isDeviceRegistered(BluetoothDevice device, {String? advertisedName}) {
+    return getRegistrationForDevice(device, advertisedName: advertisedName) != null;
+  }
 
   // MQ-135 Gas
   int? get gasRawAdc => _gasRawAdc;
@@ -286,6 +338,15 @@ class DeviceProvider extends ChangeNotifier {
         isGenericDevice: _bleService.isGenericDevice,
         discoveredServices: _bleService.discoveredServices,
       );
+
+      final currentDevId = _device.deviceId ?? _matchedDeviceId;
+      if (!_device.isGenericDevice && currentDevId != null && currentDevId.isNotEmpty) {
+        saveConnectedDevice(
+          deviceId: currentDevId,
+          deviceName: _device.name,
+          remoteId: _device.id ?? '',
+        );
+      }
 
       _monitoringProvider.addEvent(MonitoringEvent(
         timestamp: DateTime.now(),
@@ -612,9 +673,58 @@ class DeviceProvider extends ChangeNotifier {
 
   // ── Unique Device ID Storage & Finding ─────────────────────────────────────
 
+  Future<void> _persistRegistry(SharedPreferences prefs) async {
+    final list = _registeredDevices.values.map((r) => r.toJson()).toList();
+    await prefs.setString(BleConstants.prefRegisteredDevices, jsonEncode(list));
+  }
+
   Future<void> loadSavedDevice() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      _registeredDevices.clear();
+
+      // 1. Load multi-device registry from JSON
+      final rawRegistry = prefs.getString(BleConstants.prefRegisteredDevices);
+      if (rawRegistry != null && rawRegistry.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(rawRegistry);
+          if (decoded is List) {
+            for (final item in decoded) {
+              if (item is Map<String, dynamic>) {
+                final reg = RegisteredDevice.fromJson(item);
+                if (reg.deviceId.isNotEmpty) {
+                  final key = (reg.remoteId.isNotEmpty ? reg.remoteId : reg.deviceId).toLowerCase().trim();
+                  _registeredDevices[key] = reg;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[Storage] Error decoding registered devices registry: $e');
+        }
+      }
+
+      // 2. Legacy Migration: If registry was empty, migrate single saved device if present
+      final legacyId = prefs.getString(BleConstants.prefLastDeviceId);
+      final legacyRemote = prefs.getString(BleConstants.prefLastRemoteId);
+      final legacyName = prefs.getString(BleConstants.prefLastDeviceName);
+      final legacyTs = prefs.getString(BleConstants.prefLastConnectedTime);
+
+      if (_registeredDevices.isEmpty && legacyId != null && legacyId.isNotEmpty) {
+        final reg = RegisteredDevice(
+          deviceId: legacyId,
+          remoteId: legacyRemote ?? '',
+          deviceName: legacyName ?? BleConstants.deviceName,
+          serviceUuid: BleConstants.serviceUuid,
+          registeredAt: legacyTs != null ? (DateTime.tryParse(legacyTs) ?? DateTime.now()) : DateTime.now(),
+          lastConnectedAt: legacyTs != null ? (DateTime.tryParse(legacyTs) ?? DateTime.now()) : DateTime.now(),
+        );
+        final key = (legacyRemote != null && legacyRemote.isNotEmpty ? legacyRemote : legacyId).toLowerCase().trim();
+        _registeredDevices[key] = reg;
+        await _persistRegistry(prefs);
+      }
+
+      // 3. Populate single active device pointers for backward compatibility
       _savedDeviceId = prefs.getString(BleConstants.prefLastDeviceId);
       _savedDeviceName = prefs.getString(BleConstants.prefLastDeviceName);
       _savedRemoteId = prefs.getString(BleConstants.prefLastRemoteId);
@@ -622,6 +732,17 @@ class DeviceProvider extends ChangeNotifier {
       if (tsStr != null) {
         _savedConnectedTimestamp = DateTime.tryParse(tsStr);
       }
+
+      if (_savedDeviceId == null && _registeredDevices.isNotEmpty) {
+        final mostRecent = _registeredDevices.values.reduce(
+          (a, b) => a.lastConnectedAt.isAfter(b.lastConnectedAt) ? a : b,
+        );
+        _savedDeviceId = mostRecent.deviceId;
+        _savedDeviceName = mostRecent.deviceName;
+        _savedRemoteId = mostRecent.remoteId;
+        _savedConnectedTimestamp = mostRecent.lastConnectedAt;
+      }
+
       if (_savedDeviceId != null && _targetDeviceId.isEmpty) {
         _targetDeviceId = _savedDeviceId!;
       }
@@ -638,27 +759,108 @@ class DeviceProvider extends ChangeNotifier {
   }) async {
     try {
       final cleanId = AppUtils.normalizeDeviceId(deviceId);
+      final cleanRemoteId = remoteId.trim();
       final prefs = await SharedPreferences.getInstance();
-      final nowStr = DateTime.now().toIso8601String();
+      final now = DateTime.now();
+
+      // Look for existing registration to keep original registeredAt timestamp
+      final existingKey = cleanRemoteId.toLowerCase();
+      RegisteredDevice? existing = _registeredDevices[existingKey];
+      if (existing == null) {
+        for (final reg in _registeredDevices.values) {
+          if (reg.deviceId.toUpperCase() == cleanId.toUpperCase()) {
+            existing = reg;
+            break;
+          }
+        }
+      }
+
+      final newRegistration = RegisteredDevice(
+        deviceId: cleanId,
+        remoteId: cleanRemoteId.isNotEmpty ? cleanRemoteId : (existing?.remoteId ?? cleanId),
+        deviceName: deviceName.isNotEmpty ? deviceName : (existing?.deviceName ?? BleConstants.deviceName),
+        serviceUuid: BleConstants.serviceUuid,
+        registeredAt: existing?.registeredAt ?? now,
+        lastConnectedAt: now,
+      );
+
+      final storeKey = (cleanRemoteId.isNotEmpty ? cleanRemoteId : cleanId).toLowerCase();
+      _registeredDevices[storeKey] = newRegistration;
+
+      // Persist full registry to SharedPreferences
+      await _persistRegistry(prefs);
+
+      // Also persist legacy keys for backward compatibility
       await prefs.setString(BleConstants.prefLastDeviceId, cleanId);
-      await prefs.setString(BleConstants.prefLastDeviceName, deviceName);
-      await prefs.setString(BleConstants.prefLastRemoteId, remoteId);
-      await prefs.setString(BleConstants.prefLastConnectedTime, nowStr);
+      await prefs.setString(BleConstants.prefLastDeviceName, newRegistration.deviceName);
+      await prefs.setString(BleConstants.prefLastRemoteId, cleanRemoteId);
+      await prefs.setString(BleConstants.prefLastConnectedTime, now.toIso8601String());
 
       _savedDeviceId = cleanId;
-      _savedDeviceName = deviceName;
-      _savedRemoteId = remoteId;
-      _savedConnectedTimestamp = DateTime.now();
+      _savedDeviceName = newRegistration.deviceName;
+      _savedRemoteId = cleanRemoteId;
+      _savedConnectedTimestamp = now;
       _targetDeviceId = cleanId;
+
+      _handleBleLog('Device identity saved to registry [ID: $cleanId] (${newRegistration.deviceName})');
       notifyListeners();
     } catch (e) {
       debugPrint('[Storage] Error saving connected device: $e');
     }
   }
 
+  Future<void> forgetDevice(String remoteId, {String? deviceId}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final targetKey = remoteId.toLowerCase().trim();
+      final targetId = deviceId != null ? AppUtils.normalizeDeviceId(deviceId) : null;
+
+      // Remove from registry matching remoteId or deviceId
+      _registeredDevices.remove(targetKey);
+      if (targetId != null) {
+        _registeredDevices.removeWhere((k, v) => v.deviceId.toUpperCase() == targetId.toUpperCase());
+      }
+      _registeredDevices.removeWhere((k, v) => v.remoteId.toLowerCase().trim() == targetKey);
+
+      await _persistRegistry(prefs);
+
+      // If the forgotten device was the active saved device, clear or update legacy pointers
+      if ((_savedRemoteId != null && _savedRemoteId!.toLowerCase().trim() == targetKey) ||
+          (_savedDeviceId != null && targetId != null && _savedDeviceId!.toUpperCase() == targetId.toUpperCase())) {
+        if (_registeredDevices.isNotEmpty) {
+          final next = _registeredDevices.values.first;
+          _savedDeviceId = next.deviceId;
+          _savedDeviceName = next.deviceName;
+          _savedRemoteId = next.remoteId;
+          _savedConnectedTimestamp = next.lastConnectedAt;
+          await prefs.setString(BleConstants.prefLastDeviceId, next.deviceId);
+          await prefs.setString(BleConstants.prefLastDeviceName, next.deviceName);
+          await prefs.setString(BleConstants.prefLastRemoteId, next.remoteId);
+          await prefs.setString(BleConstants.prefLastConnectedTime, next.lastConnectedAt.toIso8601String());
+        } else {
+          _savedDeviceId = null;
+          _savedDeviceName = null;
+          _savedRemoteId = null;
+          _savedConnectedTimestamp = null;
+          await prefs.remove(BleConstants.prefLastDeviceId);
+          await prefs.remove(BleConstants.prefLastDeviceName);
+          await prefs.remove(BleConstants.prefLastRemoteId);
+          await prefs.remove(BleConstants.prefLastConnectedTime);
+        }
+      }
+
+      _handleBleLog('Device registration removed: $remoteId');
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[Storage] Error forgetting device: $e');
+    }
+  }
+
   Future<void> clearSavedDevice() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      _registeredDevices.clear();
+      await prefs.remove(BleConstants.prefRegisteredDevices);
       await prefs.remove(BleConstants.prefLastDeviceId);
       await prefs.remove(BleConstants.prefLastDeviceName);
       await prefs.remove(BleConstants.prefLastRemoteId);
@@ -672,6 +874,79 @@ class DeviceProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('[Storage] Error clearing saved device: $e');
     }
+  }
+
+  Future<void> reconnectRegisteredDevice(BluetoothDevice device, RegisteredDevice reg) async {
+    _handleBleLog('Reconnecting to registered AQM device "${reg.deviceName}" [ID: ${reg.deviceId}]');
+    await connect(
+      device,
+      isAqm: true,
+      expectedDeviceId: reg.deviceId,
+    );
+  }
+
+  Future<void> connectToRegisteredDevice(RegisteredDevice reg) async {
+    if (isConnected || _bleService.isConnecting) return;
+
+    // 1. Check if device is in current scan results
+    final inScan = _scanResults.firstWhereOrNull((r) {
+      if (reg.remoteId.isNotEmpty && r.device.remoteId.str.toLowerCase() == reg.remoteId.toLowerCase()) {
+        return true;
+      }
+      final name = resolveDeviceName(r).toLowerCase();
+      return name == reg.deviceName.toLowerCase();
+    });
+
+    if (inScan != null) {
+      await reconnectRegisteredDevice(inScan.device, reg);
+      return;
+    }
+
+    // 2. Check if already connected in system
+    final systemDevices = FlutterBluePlus.connectedDevices;
+    final sysTarget = systemDevices.firstWhereOrNull((d) {
+      if (reg.remoteId.isNotEmpty && d.remoteId.str.toLowerCase() == reg.remoteId.toLowerCase()) {
+        return true;
+      }
+      return d.platformName.toLowerCase() == reg.deviceName.toLowerCase();
+    });
+
+    if (sysTarget != null) {
+      await reconnectRegisteredDevice(sysTarget, reg);
+      return;
+    }
+
+    // 3. Scan briefly to find this specific peripheral
+    _isScanning = true;
+    notifyListeners();
+    await _bleService.startScan(
+      timeout: const Duration(seconds: 8),
+      onFoundTarget: (r) {
+        if (reg.remoteId.isNotEmpty && r.device.remoteId.str.toLowerCase() == reg.remoteId.toLowerCase()) {
+          return true;
+        }
+        return resolveDeviceName(r).toLowerCase() == reg.deviceName.toLowerCase();
+      },
+    );
+    _isScanning = false;
+    notifyListeners();
+
+    final found = _scanResults.firstWhereOrNull((r) {
+      if (reg.remoteId.isNotEmpty && r.device.remoteId.str.toLowerCase() == reg.remoteId.toLowerCase()) {
+        return true;
+      }
+      return resolveDeviceName(r).toLowerCase() == reg.deviceName.toLowerCase();
+    });
+
+    if (found == null) {
+      _handleStatusChanged(
+        DeviceConnectionStatus.error,
+        'Device "${reg.deviceName}" is not in range. Ensure the device is powered on and advertising.',
+      );
+      return;
+    }
+
+    await reconnectRegisteredDevice(found.device, reg);
   }
 
   Future<bool> findMyDevice(String rawId) async {
@@ -829,9 +1104,14 @@ class DeviceProvider extends ChangeNotifier {
   Future<void> reconnect() async {
     _bleService.resetReconnectAttempts();
     if (_bleService.connectedDevice != null) {
-      await connect(_bleService.connectedDevice!, isAqm: !_device.isGenericDevice);
+      final reg = getRegistrationForDevice(_bleService.connectedDevice!);
+      await connect(
+        _bleService.connectedDevice!,
+        isAqm: !_device.isGenericDevice,
+        expectedDeviceId: reg?.deviceId ?? _device.deviceId ?? _savedDeviceId,
+      );
     } else {
-      await connectToAqm();
+      await connectToAqm(expectedDeviceId: _savedDeviceId);
     }
   }
 

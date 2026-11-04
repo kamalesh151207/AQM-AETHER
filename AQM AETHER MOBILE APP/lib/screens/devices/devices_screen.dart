@@ -56,6 +56,18 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
       builder: (context, provider, _) {
         final aqmList = provider.aqmDevices;
         final otherList = provider.otherDevices;
+        final registeredDevices = provider.registeredDevices;
+        final offlineRegistered = registeredDevices.where((reg) {
+          final inScan = aqmList.any((r) {
+            if (reg.remoteId.isNotEmpty && r.device.remoteId.str.toLowerCase() == reg.remoteId.toLowerCase()) {
+              return true;
+            }
+            final name = provider.resolveDeviceName(r).toLowerCase();
+            return name == reg.deviceName.toLowerCase();
+          });
+          return !inScan;
+        }).toList();
+
         final isConnected = provider.isConnected;
         final isScanning = provider.isScanning;
         final currentDev = provider.device;
@@ -153,12 +165,12 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
               _buildSectionHeader(
                 context,
                 title: 'AQM-COMPATIBLE DEVICES',
-                count: aqmList.length,
+                count: aqmList.length + offlineRegistered.length,
                 isTarget: true,
-                tooltip: 'Peripherals advertising Service UUID ...9001 or named AQM-Kamalesh',
+                tooltip: 'Peripherals advertising Service UUID ...9001 or registered in local storage',
               ),
               const SizedBox(height: AppSpacing.xs),
-              if (aqmList.isEmpty)
+              if (aqmList.isEmpty && offlineRegistered.isEmpty)
                 _buildEmptyPlaceholder(
                   icon: Icons.sensors_off_rounded,
                   title: isScanning
@@ -168,8 +180,10 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       'Ensure your ESP32 is powered on, advertising, and within Bluetooth range (~10m).',
                   onRetry: isScanning ? null : () => provider.startScan(),
                 )
-              else
+              else ...[
                 ...aqmList.map((res) => _buildDeviceCard(context, provider, res, isAqm: true)),
+                ...offlineRegistered.map((reg) => _buildOfflineRegisteredDeviceCard(context, provider, reg)),
+              ],
 
               const SizedBox(height: AppSpacing.lg),
 
@@ -735,6 +749,10 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
     final isThisConnecting = provider.device.status.isActive &&
         !provider.isConnected &&
         provider.device.id == devId;
+    final registered = isAqm
+        ? provider.getRegistrationForDevice(result.device, advertisedName: devName)
+        : null;
+    final isRegistered = registered != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -744,7 +762,9 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
             ? null
             : () {
                 HapticFeedback.lightImpact();
-                if (isAqm) {
+                if (isRegistered) {
+                  provider.reconnectRegisteredDevice(result.device, registered);
+                } else if (isAqm) {
                   _promptForDeviceId(context, provider, result);
                 } else {
                   provider.connect(result.device, isAqm: false);
@@ -804,27 +824,88 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
-                // Compatibility Badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isAqm
-                        ? AppColors.accentCyanLight
-                        : AppColors.mutedBackground,
+                if (isRegistered) ...[
+                  // Verified Registration Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.normal.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      border: Border.all(
+                        color: AppColors.normal.withOpacity(0.35),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.verified_rounded, size: 11, color: AppColors.normal),
+                        const SizedBox(width: 4),
+                        Text(
+                          'REGISTERED [ID: ${registered.deviceId}]',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  // Forget Device Action Button
+                  InkWell(
                     borderRadius: BorderRadius.circular(AppRadius.xs),
-                    border: Border.all(
-                      color: isAqm ? AppColors.accentCyan.withOpacity(0.3) : AppColors.border,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _confirmForgetDevice(context, provider, registered);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.critical.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(AppRadius.xs),
+                        border: Border.all(color: AppColors.critical.withOpacity(0.25)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.link_off_rounded, size: 10, color: AppColors.critical),
+                          SizedBox(width: 3),
+                          Text(
+                            'FORGET',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.critical,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Text(
-                    isAqm ? 'AQM PROTOCOL VERIFIED' : 'GENERIC BLE PERIPHERAL',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: isAqm ? AppColors.primaryBlue : AppColors.textSecondary,
+                ] else ...[
+                  // Compatibility Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isAqm
+                          ? AppColors.accentCyanLight
+                          : AppColors.mutedBackground,
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      border: Border.all(
+                        color: isAqm ? AppColors.accentCyan.withOpacity(0.3) : AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      isAqm ? 'AQM PROTOCOL VERIFIED' : 'GENERIC BLE PERIPHERAL',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: isAqm ? AppColors.primaryBlue : AppColors.textSecondary,
+                      ),
                     ),
                   ),
-                ),
+                ],
                 const Spacer(),
                 if (isThisConnected)
                   ElevatedButton(
@@ -872,7 +953,9 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      if (isAqm) {
+                      if (isRegistered) {
+                        provider.reconnectRegisteredDevice(result.device, registered);
+                      } else if (isAqm) {
                         _promptForDeviceId(context, provider, result);
                       } else {
                         provider.connect(result.device, isAqm: false);
@@ -887,7 +970,9 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
                       ),
                     ),
                     child: Text(
-                      isAqm ? 'CONNECT' : 'EXPLORE',
+                      isRegistered
+                          ? 'RECONNECT'
+                          : (isAqm ? 'CONNECT' : 'EXPLORE'),
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -899,6 +984,239 @@ class _DevicesScreenState extends State<DevicesScreen> with AutomaticKeepAliveCl
           ],
         ),
       ),
+      ),
+    );
+  }
+
+  // ── Offline Registered AQM Device Card ─────────────────────────────────────
+
+  Widget _buildOfflineRegisteredDeviceCard(
+    BuildContext context,
+    DeviceProvider provider,
+    RegisteredDevice reg,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: AppCard(
+        color: AppColors.backgroundSecondary.withOpacity(0.65),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: const Icon(
+                    Icons.sensors_off_rounded,
+                    color: AppColors.textMuted,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reg.deviceName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        reg.remoteId.isNotEmpty ? reg.remoteId : 'ID: ${reg.deviceId}',
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.textMuted.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                  ),
+                  child: const Text(
+                    'OFFLINE',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.normal.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.xs),
+                    border: Border.all(color: AppColors.normal.withOpacity(0.25)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.bookmark_added_rounded, size: 10, color: AppColors.normal),
+                      const SizedBox(width: 3),
+                      Text(
+                        'SAVED [ID: ${reg.deviceId}]',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                InkWell(
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _confirmForgetDevice(context, provider, reg);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.critical.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      border: Border.all(color: AppColors.critical.withOpacity(0.25)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.link_off_rounded, size: 10, color: AppColors.critical),
+                        SizedBox(width: 3),
+                        Text(
+                          'FORGET',
+                          style: TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.critical,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                OutlinedButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    provider.connectToRegisteredDevice(reg);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryNavy,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    side: const BorderSide(color: AppColors.primaryNavy),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  child: const Text(
+                    'RECONNECT',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Forget Device Confirmation Dialog ──────────────────────────────────────
+
+  void _confirmForgetDevice(
+    BuildContext context,
+    DeviceProvider provider,
+    RegisteredDevice registered,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkSurface : AppColors.cardBackground;
+    final textCol = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final subTextCol = isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+    final borderCol = isDark ? AppColors.darkBorder : AppColors.border;
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        backgroundColor: cardBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(color: borderCol),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.link_off_rounded, color: AppColors.critical, size: 22),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              'Forget Device?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: textCol,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Remove registration for "${registered.deviceName}" (ID: ${registered.deviceId})? The next time you connect to this device, you will need to re-enter its Device ID.',
+          style: TextStyle(fontSize: 12.5, color: subTextCol, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: Text(
+              'CANCEL',
+              style: TextStyle(color: subTextCol, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogCtx).pop();
+              provider.forgetDevice(registered.remoteId, deviceId: registered.deviceId);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Device "${registered.deviceName}" removed from saved registry'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.critical,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+            ),
+            child: const Text('FORGET', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
       ),
     );
   }
